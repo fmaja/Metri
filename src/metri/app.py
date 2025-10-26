@@ -12,7 +12,7 @@ class MetriApp(ctk.CTk):
 
         self.title(APP_NAME)
         self.geometry("900x650")
-        self.minsize(800, 600)
+        self.minsize(1000, 800)
         
         self.main = MainScreen(self)
 

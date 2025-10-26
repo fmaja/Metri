@@ -257,10 +257,11 @@ class MainScreen:
         self.metronome_frame, self.metronome_view = self._create_view_frame(MetronomeView)
         self.metronome_frame.pack(fill="both", expand=True)
 
-    def show_day(self):
+    def show_day(self, selected_date=None):
+        """Show day view with optional specific date."""
         self._hide_all_frames()
-        if self.day_frame is None:
-            self.day_frame, self.day_view = self._create_view_frame(DayView)
+        # Always create a new frame to ensure proper date is passed
+        self.day_frame, self.day_view = self._create_day_frame(selected_date)
         self.day_frame.pack(fill="both", expand=True)
 
     def show_settings(self):
@@ -285,23 +286,46 @@ class MainScreen:
         """Create frame with back button and target view"""
         frame = ctk.CTkFrame(self.container)
 
-        top_bar = ctk.CTkFrame(frame)
-        top_bar.pack(fill="x", pady=(0, 5))
+        # Calendar gets special treatment with integrated header
+        if ViewClass == CalendarView:
+            view = ViewClass(frame, show_day_callback=self.show_day_view, back_callback=self.show_menu)
+            view.pack(fill="both", expand=True)
+        else:
+            top_bar = ctk.CTkFrame(frame, fg_color="transparent", height=50)
+            top_bar.pack(fill="x", pady=(10, 0), padx=10)
+            top_bar.pack_propagate(False)
 
-        back_button = ctk.CTkButton(
-            top_bar,
-            text="← Powrót",
-            command=self.show_menu,
-            width=100,
-            fg_color="#555555",
-            hover_color="#777777"
-        )
-        back_button.pack(anchor="w", padx=10, pady=5)
+            back_button = ctk.CTkButton(
+                top_bar,
+                text="← Powrót",
+                command=self.show_menu,
+                width=100,
+                height=35,
+                fg_color="#555555",
+                hover_color="#777777"
+            )
+            back_button.pack(side="left", pady=5)
 
-        view = ViewClass(frame)
-        view.pack(fill="both", expand=True, padx=10, pady=(0, 10))
+            view = ViewClass(frame)
+            view.pack(fill="both", expand=True, padx=10, pady=(0, 10))
 
         return frame, view
+    
+    def _create_day_frame(self, selected_date=None):
+        """Create day view frame with integrated header and callbacks."""
+        frame = ctk.CTkFrame(self.container)
+        view = DayView(
+            frame,
+            back_to_menu_callback=self.show_menu,
+            back_to_calendar_callback=self.show_calendar,
+            selected_date=selected_date
+        )
+        view.pack(fill="both", expand=True)
+        return frame, view
+    
+    def show_day_view(self, selected_date=None):
+        """Show day view, optionally with a specific date selected."""
+        self.show_day(selected_date)
 
 
 def create_main_screen():
