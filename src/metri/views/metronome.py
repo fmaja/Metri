@@ -2,7 +2,7 @@ import customtkinter as ctk
 import threading
 import time
 import os
-import simpleaudio as sa
+import pygame
 
 
 # --- LOGIC ---
@@ -89,14 +89,15 @@ class MetronomeView(ctk.CTkFrame):
         self.indicator_frame = None
 
         # Audio setup
+        pygame.mixer.init()
         current_dir = os.path.dirname(__file__)
         assets_dir = os.path.abspath(os.path.join(current_dir, '..', 'assets', 'sounds'))
         self.click_path = os.path.join(assets_dir, 'click.wav')
         self.strong_click_path = os.path.join(assets_dir, 'strong_click.wav')
 
         try:
-            self.click_obj = sa.WaveObject.from_wave_file(self.click_path)
-            self.strong_click_obj = sa.WaveObject.from_wave_file(self.strong_click_path)
+            self.click_obj = pygame.mixer.Sound(self.click_path)
+            self.strong_click_obj = pygame.mixer.Sound(self.strong_click_path)
         except Exception as e:
             print(f"Audio loading error: {e}")
             self.click_obj = None
