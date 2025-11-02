@@ -77,7 +77,7 @@ class InterwalyView(ctk.CTkFrame):
             self.theory_container,
             text=intro_text,
             font=("Arial", 14),
-            text_color="#ECF0F1",
+            text_color="#171616",
             wraplength=820,
             justify="left"
         ).pack(anchor="w", pady=(0, 15))

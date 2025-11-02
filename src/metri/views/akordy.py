@@ -70,7 +70,7 @@ class AkordyView(ctk.CTkFrame):
             font=("Arial", 14),
             wraplength=820,
             justify="left",
-            text_color="#e0e0e0"
+            text_color="#171616"
         )
         intro_label.pack(pady=(0, 15), anchor="w")
 
