@@ -100,7 +100,6 @@ class MainScreen:
         )
         self.calendar_button.grid(row=2, column=0, pady=8, sticky="ew")
 
-        # Move metronome button to the left section
         self.metronome_button = ctk.CTkButton(
             left_panel,
             text="Metronom",
