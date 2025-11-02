@@ -289,6 +289,10 @@ class MainScreen:
         if ViewClass == CalendarView:
             view = ViewClass(frame, show_day_callback=self.show_day_view, back_callback=self.show_menu)
             view.pack(fill="both", expand=True)
+        elif ViewClass == TheoryView:
+            # TheoryView handles its own navigation (back buttons in child views)
+            view = ViewClass(frame, back_callback=self.show_menu)
+            view.pack(fill="both", expand=True)
         else:
             top_bar = ctk.CTkFrame(frame, fg_color="transparent", height=50)
             top_bar.pack(fill="x", pady=(10, 0), padx=10)
