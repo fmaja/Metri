@@ -3,6 +3,7 @@ from .calendar import CalendarView
 from .day import DayView
 from .settings import SettingsView
 from .theory import TheoryView
+from .chord_finder import ChordFinderView
 from .quiz import QuizView
 from .metronome import MetronomeView
 import os
@@ -100,6 +101,7 @@ class MainScreen:
         )
         self.calendar_button.grid(row=2, column=0, pady=8, sticky="ew")
 
+        # Move metronome button to the left section
         self.metronome_button = ctk.CTkButton(
             left_panel,
             text="Metronom",
@@ -155,6 +157,22 @@ class MainScreen:
         )
         self.quiz_button.grid(row=2, column=0, pady=8, sticky="ew")
 
+        # Chord Finder button
+        self.chord_finder_button = ctk.CTkButton(
+            right_panel,
+            text="Wyszukiwarka akordów",
+            command=self.show_chord_finder,
+            height=50,
+            width=button_width,
+            font=("Arial", 15),
+            fg_color="#00BCD4",
+            hover_color="#0097A7",
+            corner_radius=10,
+            border_spacing=10,
+            anchor="w",
+            image=self._get_icon("search")
+        )
+        self.chord_finder_button.grid(row=3, column=0, pady=8, sticky="ew")
         bottom_frame = ctk.CTkFrame(self.menu_frame, fg_color="transparent")
         bottom_frame.pack(fill="x", padx=60, pady=(20, 30))
 
@@ -197,6 +215,7 @@ class MainScreen:
         self.theory_view = None
         self.quiz_view = None
         self.metronome_view = None
+        self.chord_finder_view = None
 
         # Frame references
         self.calendar_frame = None
@@ -205,6 +224,7 @@ class MainScreen:
         self.theory_frame = None
         self.quiz_frame = None
         self.metronome_frame = None
+        self.chord_finder_frame = None
 
     def _get_icon(self, name):
         """Load icon by name if exists"""
@@ -228,6 +248,7 @@ class MainScreen:
             (self.theory_frame, 'theory_frame', 'theory_view'),
             (self.quiz_frame, 'quiz_frame', 'quiz_view'),
             (self.metronome_frame, 'metronome_frame', 'metronome_view'),
+                (self.chord_finder_frame, 'chord_finder_frame', 'chord_finder_view'),
         ]
 
         for frame_ref, frame_attr, view_attr in frame_references:
@@ -281,6 +302,12 @@ class MainScreen:
             self.quiz_frame, self.quiz_view = self._create_view_frame(QuizView)
         self.quiz_frame.pack(fill="both", expand=True)
 
+    def show_chord_finder(self):
+        self._hide_all_frames()
+        if self.chord_finder_frame is None:
+            self.chord_finder_frame, self.chord_finder_view = self._create_view_frame(ChordFinderView)
+        self.chord_finder_frame.pack(fill="both", expand=True)
+
     def _create_view_frame(self, ViewClass):
         """Create frame with back button and target view"""
         frame = ctk.CTkFrame(self.container)
@@ -291,6 +318,10 @@ class MainScreen:
             view.pack(fill="both", expand=True)
         elif ViewClass == TheoryView:
             # TheoryView handles its own navigation (back buttons in child views)
+            view = ViewClass(frame, back_callback=self.show_menu)
+            view.pack(fill="both", expand=True)
+        elif ViewClass == ChordFinderView:
+            # ChordFinderView has its own back within the view
             view = ViewClass(frame, back_callback=self.show_menu)
             view.pack(fill="both", expand=True)
         else:
