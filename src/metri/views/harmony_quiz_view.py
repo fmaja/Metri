@@ -298,7 +298,7 @@ class HarmonyQuizView(ctk.CTkFrame):
         ax.set_xticks(indices)
         ax.set_xticklabels([f"Sesja {i}" for i in indices])
         ax.set_ylabel("Liczba odpowiedzi")
-        ax.set_title("Ostatnie 5 sesji")
+        ax.set_title("Ostatnie sesje")
         legend = ax.legend()
         for text in legend.get_texts():
             text.set_color(text_color)
