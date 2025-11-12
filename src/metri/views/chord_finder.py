@@ -86,7 +86,7 @@ class ChordFinderView(ctk.CTkFrame):
         top = ctk.CTkFrame(self, fg_color="transparent")
         top.pack(fill="x", pady=(10, 5))
         ctk.CTkButton(top, text="← Powrót", width=100, fg_color="#555555", hover_color="#777777", command=self._go_back).pack(side="left")
-        ctk.CTkLabel(top, text="Chord Finder", font=("Arial", 28, "bold")).pack(side="left", padx=20)
+        ctk.CTkLabel(top, text="Detektor akordów", font=("Arial", 28, "bold")).pack(side="left", padx=20)
         desc = ("Wybierz nuty (klikając przyciski).\n"
                 "Aplikacja sprawdzi każdą z wybranych nut jako potencjalny prymę i poda dokładnie pasujące akordy.")
         ctk.CTkLabel(self, text=desc, font=("Arial", 14), text_color="#95a5a6", justify="left").pack(anchor="w", padx=20)

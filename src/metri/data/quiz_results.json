@@ -1,0 +1,263 @@
+{
+    "interval": [
+        {
+            "correct": 10,
+            "wrong": 5,
+            "date": "2025-09-10T12:30:00.000000"
+        },
+        {
+            "correct": 15,
+            "wrong": 8,
+            "date": "2025-09-12T19:00:00.000000"
+        },
+        {
+            "correct": 12,
+            "wrong": 6,
+            "date": "2025-09-15T15:00:00.000000"
+        },
+        {
+            "correct": 8,
+            "wrong": 4,
+            "date": "2025-09-18T11:00:00.000000"
+        },
+        {
+            "correct": 18,
+            "wrong": 7,
+            "date": "2025-09-22T17:00:00.000000"
+        },
+        {
+            "correct": 15,
+            "wrong": 5,
+            "date": "2025-09-26T14:00:00.000000"
+        },
+        {
+            "correct": 10,
+            "wrong": 3,
+            "date": "2025-09-30T20:00:00.000000"
+        },
+        {
+            "correct": 14,
+            "wrong": 6,
+            "date": "2025-10-04T13:00:00.000000"
+        },
+        {
+            "correct": 9,
+            "wrong": 2,
+            "date": "2025-10-07T18:00:00.000000"
+        },
+        {
+            "correct": 11,
+            "wrong": 5,
+            "date": "2025-10-11T16:00:00.000000"
+        },
+        {
+            "correct": 16,
+            "wrong": 4,
+            "date": "2025-10-15T10:00:00.000000"
+        },
+        {
+            "correct": 13,
+            "wrong": 7,
+            "date": "2025-10-19T21:00:00.000000"
+        },
+        {
+            "correct": 10,
+            "wrong": 5,
+            "date": "2025-10-23T12:00:00.000000"
+        },
+        {
+            "correct": 15,
+            "wrong": 6,
+            "date": "2025-10-27T17:00:00.000000"
+        },
+        {
+            "correct": 12,
+            "wrong": 3,
+            "date": "2025-10-31T14:00:00.000000"
+        },
+        {
+            "correct": 9,
+            "wrong": 5,
+            "date": "2025-11-04T19:00:00.000000"
+        },
+        {
+            "correct": 14,
+            "wrong": 4,
+            "date": "2025-11-08T11:00:00.000000"
+        },
+        {
+            "correct": 13,
+            "wrong": 2,
+            "date": "2025-11-10T00:27:28.795162"
+        },
+        {
+            "correct": 5,
+            "wrong": 1,
+            "date": "2025-11-10T00:28:10.319118"
+        },
+        {
+            "correct": 0,
+            "wrong": 3,
+            "date": "2025-11-10T00:30:38.484361"
+        },
+        {
+            "correct": 0,
+            "wrong": 1,
+            "date": "2025-11-10T00:31:24.473742"
+        },
+        {
+            "correct": 3,
+            "wrong": 1,
+            "date": "2025-11-10T00:33:51.033012"
+        },
+        {
+            "correct": 0,
+            "wrong": 1,
+            "date": "2025-11-10T00:36:01.664699"
+        },
+        {
+            "correct": 5,
+            "wrong": 6,
+            "date": "2025-11-10T00:43:41.897042"
+        },
+        {
+            "correct": 13,
+            "wrong": 4,
+            "date": "2025-11-10T02:12:57.261477"
+        },
+        {
+            "correct": 7,
+            "wrong": 1,
+            "date": "2025-11-10T02:46:59.614238"
+        },
+        {
+            "correct": 0,
+            "wrong": 3,
+            "date": "2025-11-10T08:19:35.590637"
+        }
+    ],
+    "harmony": [
+        {
+            "correct": 8,
+            "wrong": 3,
+            "date": "2025-11-07T10:00:00.000000"
+        },
+
+        {
+            "correct": 3,
+            "wrong": 2,
+            "date": "2025-11-10T00:39:40.460432"
+        }
+
+    ],
+    "rhythm": [
+        {
+            "avg_error": 120.5,
+            "categories": {
+                "perfect": 3,
+                "good": 3,
+                "mistake": 2
+            },
+            "date": "2025-09-13T14:00:00.000000"
+        },
+        {
+            "avg_error": 80.2,
+            "categories": {
+                "perfect": 5,
+                "good": 0,
+                "mistake": 1
+            },
+            "date": "2025-09-23T18:00:00.000000"
+        },
+        {
+            "avg_error": 150.9,
+            "categories": {
+                "perfect": 2,
+                "good": 4,
+                "mistake": 4
+            },
+            "date": "2025-10-01T12:00:00.000000"
+        },
+        {
+            "avg_error": 95.0,
+            "categories": {
+                "perfect": 6,
+                "good": 2,
+                "mistake": 0
+            },
+            "date": "2025-10-10T21:00:00.000000"
+        },
+        {
+            "avg_error": 130.4,
+            "categories": {
+                "perfect": 4,
+                "good": 3,
+                "mistake": 1
+            },
+            "date": "2025-10-18T16:00:00.000000"
+        },
+        {
+            "avg_error": 110.7,
+            "categories": {
+                "perfect": 5,
+                "good": 5,
+                "mistake": 2
+            },
+            "date": "2025-10-27T10:00:00.000000"
+        },
+        {
+            "avg_error": 160.0,
+            "categories": {
+                "perfect": 3,
+                "good": 3,
+                "mistake": 3
+            },
+            "date": "2025-11-05T13:00:00.000000"
+        },
+        {
+            "avg_error": 208,
+            "categories": {
+                "perfect": 0,
+                "good": 0,
+                "mistake": 4
+            },
+            "date": "2025-11-10T01:01:10.252535"
+        },
+        {
+            "avg_error": 170,
+            "categories": {
+                "perfect": 4,
+                "good": 4,
+                "mistake": 2
+            },
+            "date": "2025-11-10T01:04:49.672458"
+        },
+        {
+            "avg_error": 344,
+            "categories": {
+                "perfect": 8,
+                "good": 0,
+                "mistake": 2
+            },
+            "date": "2025-11-10T01:06:41.532231"
+        },
+        {
+            "avg_error": 283,
+            "categories": {
+                "perfect": 1,
+                "good": 3,
+                "mistake": 5
+            },
+            "date": "2025-11-10T02:06:31.284120"
+        },
+        {
+            "avg_error": 104,
+            "categories": {
+                "perfect": 6,
+                "good": 4,
+                "mistake": 1
+            },
+            "date": "2025-11-10T02:14:49.414859"
+        }
+    ]
+}
