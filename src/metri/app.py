@@ -1,6 +1,10 @@
 import customtkinter as ctk
 from .views.main_screen import MainScreen
-
+try:
+    from ctypes import windll
+    windll.shcore.SetProcessDpiAwareness(1)  # lub 2
+except:
+    pass
 APP_NAME = "Metri"
 
 
