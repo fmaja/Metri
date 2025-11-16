@@ -12,6 +12,11 @@ class AkordyView(ctk.CTkFrame):
     """
 
     BASE_FREQ_C4 = 261.6256
+    ACCENT_CYAN = "#25b4b6"
+    ACCENT_GOLD = "#cca839"
+    ACCENT_PURPLE = "#552564"
+    ACCENT_GREEN = "#61be5f"
+    ACCENT_LAVENDER = "#9b75a7"
 
     def __init__(self, master, on_back=None, **kwargs):
         super().__init__(master, **kwargs)
@@ -40,17 +45,17 @@ class AkordyView(ctk.CTkFrame):
             command=self._on_back,
             width=130,
             height=40,
-            fg_color="#555555",
-            hover_color="#777777",
-            font=("Arial", 14)
+            fg_color=(self.ACCENT_LAVENDER, "#333333"),
+            hover_color=(self.ACCENT_PURPLE, "#444444"),
+            font=("Roboto", 14)
         )
         back_btn.pack(side="left")
 
         title_label = ctk.CTkLabel(
             top_bar,
             text="Akordy",
-            font=("Arial", 28, "bold"),
-            text_color="#00BCD4"
+            font=("Roboto", 28, "bold"),
+            text_color=self.ACCENT_CYAN
         )
         title_label.pack(side="left", padx=(20, 0))
 
@@ -67,10 +72,10 @@ class AkordyView(ctk.CTkFrame):
         intro_label = ctk.CTkLabel(
             theory_container,
             text=intro_text,
-            font=("Arial", 14),
+            font=("Roboto", 14),
             wraplength=820,
             justify="left",
-            text_color="#e0e0e0"
+            text_color=("#333333", "#e0e0e0")
         )
         intro_label.pack(pady=(0, 15), anchor="w")
 
@@ -204,7 +209,9 @@ class AkordyView(ctk.CTkFrame):
             btn = ctk.CTkButton(
                 self.master_frame,
                 text=name,
-                command=lambda i=index: self._show_chord_details(i)
+                command=lambda i=index: self._show_chord_details(i),
+                font=("Roboto", 14),
+                height=40
             )
             btn.pack(fill="x", pady=2, padx=5)
 
@@ -225,31 +232,31 @@ class AkordyView(ctk.CTkFrame):
         header_frame = ctk.CTkFrame(self.detail_frame, fg_color="transparent")
         header_frame.pack(fill="x", pady=(0, 15))
 
-        ctk.CTkLabel(header_frame, text=name, font=("Arial", 24, "bold"), text_color="#00BCD4").pack(anchor="w")
+        ctk.CTkLabel(header_frame, text=name, font=("Roboto", 24, "bold"), text_color=self.ACCENT_CYAN).pack(anchor="w")
 
         notes_str = " — ".join([self._note_pc(st) for st in semitones])
         intervals_str = self._format_intervals(semitones)
-        ctk.CTkLabel(header_frame, text=f"Nuty: {notes_str} ({intervals_str})", font=("Arial", 16),
-                     text_color="#e0e0e0").pack(anchor="w", pady=(2, 0))
+        ctk.CTkLabel(header_frame, text=f"Nuty: {notes_str} ({intervals_str})", font=("Roboto", 16),
+                     text_color=("#333333", "#e0e0e0")).pack(anchor="w", pady=(2, 0))
 
         # --- Play Button ---
         ctk.CTkButton(
             self.detail_frame, text="▶ Odtwórz", width=120, height=40,
-            font=("Arial", 16), fg_color="#0097A7", hover_color="#00838F",
+            font=("Roboto", 16), fg_color=self.ACCENT_GREEN, hover_color=self.ACCENT_CYAN,
             command=lambda s=semitones: self._play_chord(s)
         ).pack(anchor="w", pady=(0, 20))
 
         # --- Details Content ---
-        content_frame = ctk.CTkFrame(self.detail_frame, fg_color="#2b2b2b", corner_radius=8)
+        content_frame = ctk.CTkFrame(self.detail_frame, fg_color=("#ffffff", "#2b2b2b"), corner_radius=8)
         content_frame.pack(fill="both", expand=True, pady=(0, 10))
 
         ctk.CTkLabel(
-            content_frame, text=f"Opis: {desc}", font=("Arial", 13), text_color="#e0e0e0",
+            content_frame, text=f"Opis: {desc}", font=("Roboto", 13), text_color=("#333333", "#e0e0e0"),
             wraplength=500, justify="left"
         ).pack(anchor="w", padx=20, pady=(10, 5))
 
         ctk.CTkLabel(
-            content_frame, text=f"Teoria: {theory_info}", font=("Arial", 13), text_color="#e0e0e0",
+            content_frame, text=f"Teoria: {theory_info}", font=("Roboto", 13), text_color=("#333333", "#e0e0e0"),
             wraplength=500, justify="left"
         ).pack(anchor="w", padx=20, pady=(5, 10))
 
@@ -259,14 +266,14 @@ class AkordyView(ctk.CTkFrame):
         section_frame.pack(fill="x", pady=5)
 
         # Header
-        header = ctk.CTkFrame(section_frame, fg_color="#2c2c2c", corner_radius=8)
+        header = ctk.CTkFrame(section_frame, fg_color=("#e0e0e0", "#2c2c2c"), corner_radius=8)
         header.pack(fill="x")
 
         title_label = ctk.CTkLabel(
             header,
             text=title,
-            font=("Arial", 14, "bold"),
-            text_color="#00BCD4"
+            font=("Roboto", 14, "bold"),
+            text_color=self.ACCENT_CYAN
         )
         title_label.pack(side="left", padx=15, pady=8)
 
@@ -275,9 +282,9 @@ class AkordyView(ctk.CTkFrame):
             text="▼",
             width=40,
             height=30,
-            fg_color="#0277BD",
-            hover_color="#01579B",
-            font=("Arial", 12),
+            fg_color=self.ACCENT_PURPLE,
+            hover_color=self.ACCENT_LAVENDER,
+            font=("Roboto", 12),
             command=lambda: self._toggle_section(section_id)
         )
         toggle_btn.pack(side="right", padx=10, pady=5)
@@ -285,14 +292,14 @@ class AkordyView(ctk.CTkFrame):
         # Content container (initially hidden)
         content_container = ctk.CTkFrame(section_frame, fg_color="transparent")
 
-        content_frame = ctk.CTkFrame(content_container, fg_color="#1e1e1e", corner_radius=8)
+        content_frame = ctk.CTkFrame(content_container, fg_color=("#f2f2f2", "#1e1e1e"), corner_radius=8)
         content_frame.pack(fill="x", padx=0, pady=(5, 0))
 
         content_label = ctk.CTkLabel(
             content_frame,
             text=content,
-            font=("Arial", 13),
-            text_color="#e0e0e0",
+            font=("Roboto", 13),
+            text_color=("#333333", "#e0e0e0"),
             justify="left",
             anchor="w",
             wraplength=780
