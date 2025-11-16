@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Metri{% endblock %}</title>
+  <!-- UI theme -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/ui-theme.css') }}">
+</head>
+<body>
+  <header class="app-header" role="banner">
+    <div class="logo">
+      <!-- small svg/metronome icon placeholder -->
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <path d="M12 2L15 8H9L12 2Z" fill="#5b2b6f" />
+        <circle cx="12" cy="15" r="6" fill="#18a79a" />
+      </svg>
+    </div>
+
+    <div class="title" role="heading" aria-level="1">{% block header_title %}Metri{% endblock %}</div>
+
+    <div style="display:flex;gap:8px;align-items:center;">
+      <button class="icon-btn" title="Toggle de-emphasis" data-toggle-deemph aria-pressed="false">
+        <!-- eye icon -->
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M12 5C7 5 2.73 8.11 1 12c1.73 3.89 6 7 11 7s9.27-3.11 11-7c-1.73-3.89-6-7-11-7zm0 12a5 5 0 110-10 5 5 0 010 10z" fill="#5b2b6f"/></svg>
+      </button>
+      <div style="display:flex;gap:6px;">
+        <button class="icon-btn" data-theme="light" title="Light theme">◐</button>
+        <button class="icon-btn" data-theme="dark" title="Dark theme">◑</button>
+      </div>
+    </div>
+  </header>
+
+  <main role="main" style="padding:24px;">
+    {% block content %}{% endblock %}
+  </main>
+
+  <script defer src="{{ url_for('static', filename='js/ui-mode.js') }}"></script>
+</body>
+</html>

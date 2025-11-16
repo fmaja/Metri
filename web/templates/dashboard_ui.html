@@ -1,0 +1,48 @@
+{% extends "base_ui.html" %}
+
+{% block title %}Metri — Dashboard{% endblock %}
+
+{% block header_title %}Metri{% endblock %}
+
+{% block content %}
+  <section aria-labelledby="weekly-goal" style="max-width:1100px;margin:0 auto;">
+    <div class="card" style="padding:20px 24px;display:flex;flex-direction:column;gap:12px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;">
+        <h2 id="weekly-goal" style="margin:0;color:var(--primary);">Cel na ten tydzień:</h2>
+        <div class="muted">Postęp: <strong>59%</strong></div>
+      </div>
+
+      <div class="progress-wrap">
+        <div class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="59">
+          <div class="progress__fill" style="width:59%"></div>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:12px;margin-top:8px;flex-wrap:wrap;">
+        <span class="muted" style="background:#e5f7f6;padding:6px 10px;border-radius:999px;font-weight:700;color:var(--primary);">Ćwicz 30 min</span>
+        <span class="muted" style="background:#eef7e9;padding:6px 10px;border-radius:999px;font-weight:700;color:var(--positive);">Pracuj z metronomem 10 min</span>
+      </div>
+    </div>
+  </section>
+
+  <section style="max-width:1100px;margin:24px auto 0;">
+    <div class="card-grid">
+      <a class="card" href="/exercises">
+        <div class="icon">🎸</div>
+        <div>Ćwiczenia</div>
+      </a>
+      <a class="card" href="/theory">
+        <div class="icon" style="background:var(--warm);">📘</div>
+        <div>Teoria</div>
+      </a>
+      <a class="card" href="/metronome">
+        <div class="icon" style="background:var(--accent);">⏱</div>
+        <div>Metronom</div>
+      </a>
+      <a class="card" href="/detector">
+        <div class="icon" style="background:var(--positive);">🔍</div>
+        <div>Detektor akordu</div>
+      </a>
+    </div>
+  </section>
+{% endblock %}
