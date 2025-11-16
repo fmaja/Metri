@@ -1,57 +1,60 @@
+
 import customtkinter as ctk
 from typing import List, Dict, Tuple
 
-# Basic chord formula library in semitones relative to root (un-ordered sets)
+# =========================
+# Harmonic library
+# =========================
+
 CHORD_FORMULAS: Dict[str, List[int]] = {
-    "": [0, 4, 7],  # Major triad shown as just root name, e.g., "C"
-    "m": [0, 3, 7],
+    "": [0, 4, 7],            # major
+    "m": [0, 3, 7],           # minor
     "dim": [0, 3, 6],
     "aug": [0, 4, 8],
     "sus2": [0, 2, 7],
     "sus4": [0, 5, 7],
-    "add11": [0, 4, 5, 7],  # same as add4
+    "add11": [0, 4, 5, 7],
+    "6": [0, 4, 7, 9],
+    "m6": [0, 3, 7, 9],
     "7": [0, 4, 7, 10],
     "maj7": [0, 4, 7, 11],
     "m7": [0, 3, 7, 10],
     "mMaj7": [0, 3, 7, 11],
     "dim7": [0, 3, 6, 9],
     "m7b5": [0, 3, 6, 10],
-    "6": [0, 4, 7, 9],
-    "m6": [0, 3, 7, 9],
     "add9": [0, 4, 7, 14],
     "madd9": [0, 3, 7, 14],
     "9": [0, 4, 7, 10, 14],
     "m9": [0, 3, 7, 10, 14],
     "maj9": [0, 4, 7, 11, 14],
-    "11": [0, 4, 7, 10, 14, 17],  # theoretical (often omit 3)
-    "13": [0, 4, 7, 10, 14, 21],  # theoretical (often omit 5 / 11)
-    # Altered dominants (we keep base 7 plus alteration)
+    "11": [0, 4, 7, 10, 14, 17],   # theoretical
+    "13": [0, 4, 7, 10, 14, 21],   # theoretical
     "7b9": [0, 4, 7, 10, 13],
     "7#9": [0, 4, 7, 10, 15],
     "7b5": [0, 4, 6, 10],
     "7#5": [0, 4, 8, 10],
-    "7alt": [0, 4, 7, 10, 13, 15],  # cluster b9 #9
+    "7alt": [0, 4, 7, 10, 13, 15],
 }
 
-NOTE_NAMES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
+NOTE_NAMES = ["C", "C#", "D", "D#", "E", "F",
+              "F#", "G", "G#", "A", "A#", "B"]
 
-# Labels within one octave; extensions are folded (e.g., 9 -> 2)
 DEGREE_LABELS_12 = {
-    0: "1", 1: "b2", 2: "2", 3: "b3", 4: "3", 5: "4", 6: "b5/#11", 7: "5", 8: "#5/b13", 9: "6", 10: "b7", 11: "7"
+    0: "1", 1: "b2", 2: "2", 3: "b3", 4: "3", 5: "4",
+    6: "b5/#11", 7: "5", 8: "#5/b13", 9: "6", 10: "b7", 11: "7"
 }
 
-# Intervals (mod 12) that must be present for musically sensible partial matches
 REQUIRED_INTERVALS: Dict[str, List[int]] = {
-    "": [0, 4],          # major triad: need 3rd; 5th optional
-    "m": [0, 3],         # minor triad: need b3
+    "": [0, 4],
+    "m": [0, 3],
     "dim": [0, 3, 6],
     "aug": [0, 4, 8],
     "sus2": [0, 2],
     "sus4": [0, 5],
-    "add11": [0, 4, 5],  # require 3 and 4 present; 5 optional here because add11 doesn't need 5 theoretically, but we include 7 so both paths OK
+    "add11": [0, 4, 5],
     "6": [0, 4, 9],
     "m6": [0, 3, 9],
-    "7": [0, 4, 10],     # require b7 to call it a 7 chord
+    "7": [0, 4, 10],
     "maj7": [0, 4, 11],
     "m7": [0, 3, 10],
     "mMaj7": [0, 3, 11],
@@ -71,121 +74,340 @@ REQUIRED_INTERVALS: Dict[str, List[int]] = {
     "7alt": [0, 4, 10, (13 % 12), (15 % 12)],
 }
 
-# Additional tensions allowed alongside a chord without changing its name
-# (selection may include these beyond the base formula)
 ALLOWED_EXTRAS: Dict[str, List[int]] = {
-    "add11": [2],  # allow added 9 with add11
-    "add9": [5],   # allow added 11 with add9 (still not sus because 3rd is required)
+    "add11": [2],  # allow 9
+    "add9": [5],   # allow 11
 }
 
+
 class ChordFinderView(ctk.CTkFrame):
+    # Piano layout helpers
+    PIANO_WHITE_ORDER = [0, 2, 4, 5, 7, 9, 11]   # C D E F G A B
+    PIANO_BLACK_REL = {1: 0.7, 3: 1.7, 6: 3.7, 8: 4.7, 10: 5.7}  # relative to white-key width
+
     def __init__(self, master, back_callback=None):
         super().__init__(master)
         self.back_callback = back_callback
 
+        # State
+        self.selected_pitches: List[int] = []  # MIDI note numbers
+        self.note_visual_map: Dict[int, List[Tuple[str, any]]] = {}  # midi -> [("piano_rect",(canvas,rect,base)), ("guitar_btn",(s,f,btn))]
+
+        # Header
         top = ctk.CTkFrame(self, fg_color="transparent")
         top.pack(fill="x", pady=(10, 5))
-        ctk.CTkButton(top, text="← Powrót", width=100, fg_color="#555555", hover_color="#777777", command=self._go_back).pack(side="left")
-        ctk.CTkLabel(top, text="Detektor akordów", font=("Arial", 28, "bold")).pack(side="left", padx=20)
-        desc = ("Wybierz nuty (klikając przyciski).\n"
-                "Aplikacja sprawdzi każdą z wybranych nut jako potencjalny prymę i poda dokładnie pasujące akordy.")
-        ctk.CTkLabel(self, text=desc, font=("Arial", 14), text_color="#95a5a6", justify="left").pack(anchor="w", padx=20)
+        ctk.CTkButton(top, text="← Powrót", width=100,
+                      fg_color="#555555", hover_color="#777777",
+                      command=self._go_back).pack(side="left")
+        ctk.CTkLabel(top, text="Detektor akordów",
+                     font=("Arial", 28, "bold")).pack(side="left", padx=20)
 
-        self.selected_notes: List[int] = []
-        self.note_buttons: List[ctk.CTkButton] = []
+        # Mode selector
+        selector_bar = ctk.CTkFrame(self, fg_color="transparent")
+        selector_bar.pack(fill="x", padx=20)
+        ctk.CTkLabel(selector_bar, text="Instrument:",
+                     font=("Arial", 14), text_color="#95a5a6").pack(side="left")
+        self.mode_selector = ctk.CTkSegmentedButton(
+            selector_bar, values=["Pianino", "Gitara"], command=self._switch_mode)
+        self.mode_selector.set("Pianino")
+        self.mode_selector.pack(side="left", padx=10)
 
-        self.notes_grid = ctk.CTkFrame(self)
-        self.notes_grid.pack(pady=15)
-        for i, name in enumerate(NOTE_NAMES):
-            btn = ctk.CTkButton(self.notes_grid, text=name, width=50, height=40,
-                                fg_color="#2c3e50", hover_color="#34495e",
-                                command=lambda s=i: self._toggle_note(s))
-            btn.grid(row=0, column=i, padx=4)
-            self.note_buttons.append(btn)
-        # (Usunięto sekcję wyboru basu – analiza działa dla każdej wybranej nuty jako prymy)
+        # Selected indicator
+        self.selection_indicator = ctk.CTkLabel(
+            self, text="Wybrane: —", font=("Arial", 14, "italic"),
+            text_color="#7f8c8d")
+        self.selection_indicator.pack(anchor="w", padx=20, pady=(6, 10))
 
-        # Selected notes indicator
-        self.selection_indicator = ctk.CTkLabel(self, text="Wybrane: —", font=("Arial", 14, "italic"), text_color="#7f8c8d")
-        self.selection_indicator.pack(anchor="w", padx=20, pady=(0, 10))
-
+        # Actions
         action_bar = ctk.CTkFrame(self, fg_color="transparent")
         action_bar.pack(fill="x", padx=20)
-        ctk.CTkButton(action_bar, text="Analizuj", width=140, height=42, fg_color="#1ABC9C", hover_color="#16A085", command=self._analyze).pack(side="left")
-        ctk.CTkButton(action_bar, text="Wyczyść", width=140, height=42, fg_color="#D35B58", hover_color="#C77C78", command=self._clear).pack(side="left", padx=10)
+        ctk.CTkButton(action_bar, text="Analizuj", width=140, height=42,
+                      fg_color="#1ABC9C", hover_color="#16A085",
+                      command=self._analyze).pack(side="left")
+        ctk.CTkButton(action_bar, text="Wyczyść", width=140, height=42,
+                      fg_color="#D35B58", hover_color="#C77C78",
+                      command=self._clear).pack(side="left", padx=10)
 
-        self.results_container = ctk.CTkScrollableFrame(self, height=300)
-        self.results_container.pack(fill="both", expand=True, padx=20, pady=15)
-        ctk.CTkLabel(self.results_container, text="Brak wyników", font=("Arial", 16, "italic"), text_color="#7f8c8d").pack(pady=10)
+        # Instrument area
+        self.instrument_frame = ctk.CTkFrame(self)
+        self.instrument_frame.pack(fill="x", padx=20, pady=15)
 
+        # Results area
+        self.results_container = ctk.CTkScrollableFrame(self, height=380)
+        self.results_container.pack(fill="both", expand=True, padx=20, pady=10)
+        ctk.CTkLabel(self.results_container, text="Brak wyników",
+                     font=("Arial", 16, "italic"),
+                     text_color="#7f8c8d").pack(pady=10)
+
+        # Build initial
+        self._build_piano()
+
+    # ---------------- Navigation ----------------
     def _go_back(self):
         if self.back_callback:
             self.back_callback()
 
-    def _toggle_note(self, semitone: int):
-        if semitone in self.selected_notes:
-            self.selected_notes.remove(semitone)
+    def _switch_mode(self, mode: str):
+        # wipe instrument visuals
+        for w in self.instrument_frame.winfo_children():
+            w.destroy()
+        self.note_visual_map.clear()
+        # keep selected_pitches; rebuild instrument visuals and apply highlights
+        if mode == "Pianino":
+            self._build_piano()
         else:
-            self.selected_notes.append(semitone)
-        self._refresh_note_buttons()
+            self._build_guitar()
+
+    # ---------------- Piano: 3 octaves with octave labels ----------------
+    def _build_piano(self):
+        # 3 octaves: C3..B5 (MIDI 48..83)
+        start_midi = 48  # C3
+        octaves = 3
+        white_key_w = 42
+        white_key_h = 200
+        black_key_w = 28
+        black_key_h = 120
+        canvas_width = int(octaves * 7 * white_key_w)
+        canvas_height = white_key_h + 20
+
+        canvas = ctk.CTkCanvas(self.instrument_frame, width=canvas_width, height=canvas_height,
+                               bg="#eaeaea", highlightthickness=0)
+        canvas.pack()
+
+        # White keys for each octave
+        for octave_idx in range(octaves):
+            base_x = int(octave_idx * 7 * white_key_w)
+            # Base MIDI for this octave's C
+            base_octave_midi = start_midi + octave_idx * 12
+            for i, note_pc in enumerate(self.PIANO_WHITE_ORDER):
+                midi = base_octave_midi + note_pc
+                x0 = base_x + int(i * white_key_w)
+                x1 = x0 + int(white_key_w)
+                rect = canvas.create_rectangle(x0, 10, x1, 10 + white_key_h, fill="white", outline="#222", width=2)
+                # label with octave
+                name = self._midi_name(midi)
+                canvas.create_text((x0 + white_key_w // 2, 10 + white_key_h - 16),
+                                   text=name, font=("Arial", 10, "bold"), fill="#333")
+                # bind
+                canvas.tag_bind(rect, "<Button-1>", lambda e, m=midi, r=rect: self._toggle_pitch_visual("piano_rect", m, (canvas, r, "white")))
+                self._register_visual(m=midi, kind="piano_rect", ref=(canvas, rect, "white"))
+
+        # Black keys positions
+        for octave_idx in range(octaves):
+            base_x = int(octave_idx * 7 * white_key_w)
+            base_octave_midi = start_midi + octave_idx * 12
+            for note_pc, pos in self.PIANO_BLACK_REL.items():
+                midi = base_octave_midi + note_pc
+                x = base_x + int(pos * white_key_w) - black_key_w // 2
+                rect = canvas.create_rectangle(x, 10, x + black_key_w, 10 + black_key_h, fill="black", outline="#111", width=2)
+                canvas.tag_bind(rect, "<Button-1>", lambda e, m=midi, r=rect: self._toggle_pitch_visual("piano_rect", m, (canvas, r, "black")))
+                self._register_visual(m=midi, kind="piano_rect", ref=(canvas, rect, "black"))
+
+        # apply highlights to already selected
+        self._apply_highlights_piano()
+
+        ctk.CTkLabel(self.instrument_frame, text="Pianino (3 oktawy) – kliknij klawisz, aby zaznaczyć nutę",
+                     font=("Arial", 12), text_color="#7f8c8d").pack(pady=(6, 0))
+
+    def _apply_highlights_piano(self):
+        for m in self.selected_pitches:
+            for kind, ref in self.note_visual_map.get(m, []):
+                if kind == "piano_rect":
+                    canvas, rect, base = ref
+                    canvas.itemconfig(rect, fill="#2b6cb0")  # blue
+
+    # ---------------- Guitar: realistic fretboard with octave labels ----------------
+    def _build_guitar(self):
+        # Standard tuning MIDI: E2(40) A2(45) D3(50) G3(55) B3(59) E4(64)
+        open_strings_midi = [40, 45, 50, 55, 59, 64]
+        frets = 14  # show 0..14
+
+        fb = ctk.CTkFrame(self.instrument_frame, fg_color="#3a3a3a", corner_radius=12)
+        fb.pack(fill="x", padx=8, pady=4)
+
+        # Header
+        header = ctk.CTkFrame(fb, fg_color="transparent")
+        header.pack(fill="x", pady=(8, 4))
+        ctk.CTkLabel(header, text="Gryf gitary – klikaj progi (0 = pusty dźwięk)",
+                     font=("Arial", 12), text_color="#e0e0e0").pack(side="left", padx=10)
+
+        # Nut line
+        nut = ctk.CTkFrame(fb, fg_color="#121212", height=6)
+        nut.pack(fill="x")
+
+        grid = ctk.CTkFrame(fb, fg_color="transparent")
+        grid.pack(fill="x", pady=6)
+
+        # columns for frets including open
+        for f in range(frets + 1):
+            grid.grid_columnconfigure(f, weight=1, uniform="fret")
+
+        # Build strings rows (top is high E4)
+        for s in range(6):
+            row = ctk.CTkFrame(grid, fg_color="transparent")
+            row.grid(row=s, column=0, columnspan=frets + 1, sticky="ew", pady=4)
+
+            # string guide line
+            line = ctk.CTkFrame(row, fg_color="#606060", height=2)
+            line.pack(fill="x", pady=(0, 6))
+
+            # frets including open
+            for f in range(frets + 1):
+                midi = open_strings_midi[s] + f
+                name = self._midi_name(midi)
+                label = "0" if f == 0 else str(f)
+                btn = ctk.CTkButton(row, text=f"{name}\n{label}",
+                                    width=64, height=40,
+                                    fg_color="#2c3e50", hover_color="#34495e",
+                                    font=("Arial", 11, "bold"),
+                                    command=lambda mm=midi, ss=s, ff=f: self._toggle_pitch_from_guitar(mm, ss, ff))
+                btn.pack(side="left", padx=3, pady=(2, 0))
+                self._register_visual(m=midi, kind="guitar_btn", ref=(s, f, btn))
+
+        # apply highlights
+        self._apply_highlights_guitar()
+
+    def _apply_highlights_guitar(self):
+        for m in self.selected_pitches:
+            for kind, ref in self.note_visual_map.get(m, []):
+                if kind == "guitar_btn":
+                    _, _, b = ref
+                    b.configure(fg_color="#27AE60")  # green
+
+    # ---------------- Visual map registry ----------------
+    def _register_visual(self, m: int, kind: str, ref: any):
+        self.note_visual_map.setdefault(m, []).append((kind, ref))
+
+    # ---------------- Selection toggling ----------------
+    def _toggle_pitch_visual(self, kind: str, midi: int, ref: any):
+        # kind == "piano_rect": ref = (canvas, rect, base_color)
+        if midi in self.selected_pitches:
+            self.selected_pitches.remove(midi)
+            if kind == "piano_rect":
+                canvas, rect, base = ref
+                canvas.itemconfig(rect, fill=base)
+            # reset any mapped guitar buttons of this exact MIDI
+            for k, r in self.note_visual_map.get(midi, []):
+                if k == "guitar_btn":
+                    _, _, b = r
+                    b.configure(fg_color="#2c3e50")
+        else:
+            self.selected_pitches.append(midi)
+            if kind == "piano_rect":
+                canvas, rect, _ = ref
+                canvas.itemconfig(rect, fill="#2b6cb0")
+            for k, r in self.note_visual_map.get(midi, []):
+                if k == "guitar_btn":
+                    _, _, b = r
+                    b.configure(fg_color="#27AE60")
         self._update_selection_indicator()
 
-    # (brak metod ustawiania/kasowania basu)
+    def _toggle_pitch_from_guitar(self, midi: int, string: int, fret: int):
+        if midi in self.selected_pitches:
+            self.selected_pitches.remove(midi)
+            # reset this button
+            for k, r in self.note_visual_map.get(midi, []):
+                if k == "guitar_btn":
+                    s, f, b = r
+                    if s == string and f == fret:
+                        b.configure(fg_color="#2c3e50")
+            # reset any mapped piano rects of same MIDI
+            for k, r in self.note_visual_map.get(midi, []):
+                if k == "piano_rect":
+                    canvas, rect, base = r
+                    canvas.itemconfig(rect, fill=base)
+        else:
+            self.selected_pitches.append(midi)
+            # highlight all visuals for this MIDI
+            for k, r in self.note_visual_map.get(midi, []):
+                if k == "piano_rect":
+                    canvas, rect, _ = r
+                    canvas.itemconfig(rect, fill="#2b6cb0")
+                elif k == "guitar_btn":
+                    _, _, b = r
+                    b.configure(fg_color="#27AE60")
+        self._update_selection_indicator()
+
+    # ---------------- Utility UI ----------------
+    def _midi_to_pc(self, midi: int) -> int:
+        return midi % 12
+
+    def _midi_to_octave(self, midi: int) -> int:
+        # MIDI octave: C4=60 -> 60//12=5 -> 5-1 = 4
+        return midi // 12 - 1
+
+    def _midi_name(self, midi: int) -> str:
+        pc = self._midi_to_pc(midi)
+        octv = self._midi_to_octave(midi)
+        return f"{NOTE_NAMES[pc]}{octv}"
+
+    def _update_selection_indicator(self):
+        if not self.selected_pitches:
+            text = "Wybrane: —"
+        else:
+            names = [self._midi_name(m) for m in sorted(set(self.selected_pitches))]
+            text = "Wybrane: " + ", ".join(names)
+        self.selection_indicator.configure(text=text)
 
     def _clear(self):
-        self.selected_notes.clear()
-        self._refresh_note_buttons()
-        for w in self.results_container.winfo_children():
-            w.destroy()
-        ctk.CTkLabel(self.results_container, text="Brak wyników", font=("Arial", 16, "italic"), text_color="#7f8c8d").pack(pady=10)
+        # reset selections and visuals
+        for m in list(self.selected_pitches):
+            for kind, ref in self.note_visual_map.get(m, []):
+                if kind == "piano_rect":
+                    canvas, rect, base = ref
+                    canvas.itemconfig(rect, fill=base)
+                elif kind == "guitar_btn":
+                    _, _, b = ref
+                    b.configure(fg_color="#2c3e50")
+        self.selected_pitches.clear()
         self._update_selection_indicator()
 
-    def _refresh_note_buttons(self):
-        # Refresh main note buttons
-        for i, btn in enumerate(self.note_buttons):
-            active = i in self.selected_notes
-            btn.configure(fg_color="#2980B9" if active else "#2c3e50")
-        # (brak przycisków basu)
+        for w in self.results_container.winfo_children():
+            w.destroy()
+        ctk.CTkLabel(self.results_container, text="Brak wyników",
+                     font=("Arial", 16, "italic"),
+                     text_color="#7f8c8d").pack(pady=10)
 
+    # ---------------- Analysis (works on pitch classes) ----------------
     def _analyze(self):
-        if not self.selected_notes:
-            for w in self.results_container.winfo_children():
-                w.destroy()
-            ctk.CTkLabel(self.results_container, text="Brak wyników", font=("Arial", 16, "italic"), text_color="#7f8c8d").pack(pady=10)
+        for w in self.results_container.winfo_children():
+            w.destroy()
+
+        if not self.selected_pitches:
+            ctk.CTkLabel(self.results_container, text="Brak wyników",
+                         font=("Arial", 16, "italic"),
+                         text_color="#7f8c8d").pack(pady=10)
             return
-        # Normalize notes modulo 12, sort unique (pitch classes)
-        pcs = sorted(set(n % 12 for n in self.selected_notes))
+
+        pcs = sorted(set(self._midi_to_pc(m) for m in self.selected_pitches))
         results = self._detect_chords_all_roots(pcs)
         self._render_results(pcs, results)
 
     def _detect_chords_all_roots(self, pcs: List[int]) -> List[Tuple[str, int, List[int]]]:
-        """Check every selected pitch-class as root. Return list of (name, root, missing_intervals).
-
+        """
+        Return list of (name, root_pc, missing_intervals) across all selected roots.
         Rules:
-        - The user's selected pitch-classes must be a subset of the chord tones (no extra tones).
-        - All defining tones for the chord quality must be present (e.g., b7 for 7, 3rd for major/minor).
-        - Exact matches (no missing tones) are returned with missing_intervals == [].
-        - Conditional/close matches are returned when missing_intervals length <= 2.
+        - Selection must be subset of chord tones (+ allowed extras).
+        - Required intervals for quality must be present.
+        - Allow exact or close matches (up to 2 missing).
         """
         candidates: List[Tuple[str, int, List[int]]] = []
-        for root in pcs:  # root must be present
+        for root in pcs:
             intervals = set((p - root) % 12 for p in pcs)
             for suffix, formula in CHORD_FORMULAS.items():
                 base_set = set(i % 12 for i in formula)
                 allowed = base_set.union(ALLOWED_EXTRAS.get(suffix, []))
-                # Reject chords when selection contains tones not in chord or its allowed tensions
                 if not intervals.issubset(allowed):
                     continue
-                # Require defining intervals for the chord quality
                 required = REQUIRED_INTERVALS.get(suffix, [0])
                 if not set(required).issubset(intervals):
                     continue
                 missing = sorted(list(base_set - intervals))
-                # allow exact or close matches (missing up to 2 tones)
                 if len(missing) <= 2:
                     name = f"{NOTE_NAMES[root]}{suffix}"
                     candidates.append((name, root, missing))
 
-        # Deduplicate keeping first occurrence
+        # Deduplicate
         seen = set()
         unique: List[Tuple[str, int, List[int]]] = []
         for name, r, missing in candidates:
@@ -194,7 +416,7 @@ class ChordFinderView(ctk.CTkFrame):
                 unique.append((name, r, missing))
                 seen.add(key)
 
-        # Sorting: exact matches first, then fewer missing; within same group prefer larger chords and then root order and name
+        # Sort: exact first, fewer missing next, prefer larger chords, then root order and name
         order_index = {pc: i for i, pc in enumerate(pcs)}
 
         def sort_key(item: Tuple[str, int, List[int]]):
@@ -211,12 +433,12 @@ class ChordFinderView(ctk.CTkFrame):
         return unique
 
     def _render_results(self, pcs: List[int], results: List[Tuple[str, int, List[int]]]):
-        for w in self.results_container.winfo_children():
-            w.destroy()
         if not results:
-            ctk.CTkLabel(self.results_container, text="Nie znaleziono akordów", font=("Arial", 16, "italic"), text_color="#7f8c8d").pack(pady=10)
+            ctk.CTkLabel(self.results_container, text="Nie znaleziono akordów",
+                         font=("Arial", 16, "italic"),
+                         text_color="#7f8c8d").pack(pady=10)
             return
-        # Count exact vs conditional
+
         exact_count = sum(1 for _, _, missing in results if not missing)
         cond_count = len(results) - exact_count
         header_text = f"Znaleziono {len(results)} możliwe akordy:"
@@ -224,26 +446,35 @@ class ChordFinderView(ctk.CTkFrame):
             header_text += f" ({exact_count} dokładnych)"
         if cond_count:
             header_text += f", {cond_count} warunkowych"
-        header = ctk.CTkLabel(self.results_container, text=header_text, font=("Arial", 18, "bold"))
+
+        header = ctk.CTkLabel(self.results_container, text=header_text,
+                              font=("Arial", 18, "bold"))
         header.pack(anchor="w", pady=(0, 10))
+
         for name, root, missing in results:
             frame = ctk.CTkFrame(self.results_container, fg_color="#2b2b2b", corner_radius=8)
             frame.pack(fill="x", pady=6)
-            ctk.CTkLabel(frame, text=name, font=("Arial", 18, "bold"), text_color="#00BCD4").pack(anchor="w", padx=12, pady=(6, 2))
+            ctk.CTkLabel(frame, text=name, font=("Arial", 18, "bold"),
+                         text_color="#00BCD4").pack(anchor="w", padx=12, pady=(6, 2))
+
             mapping = self._map_degrees(pcs, root)
             mapping_text = ", ".join(f"{NOTE_NAMES[n]}={d}" for n, d in mapping)
-            ctk.CTkLabel(frame, text=mapping_text, font=("Arial", 14), text_color="#95a5a6", wraplength=820, justify="left").pack(anchor="w", padx=12, pady=(0, 6))
+            ctk.CTkLabel(frame, text=mapping_text, font=("Arial", 14),
+                         text_color="#95a5a6", wraplength=820,
+                         justify="left").pack(anchor="w", padx=12, pady=(0, 6))
+
             if missing:
-                # show missing degrees (explain conditions)
                 missing_labels = [DEGREE_LABELS_12.get(m, f"?{m}") for m in missing]
                 miss_text = "Brakuje: " + ", ".join(missing_labels)
                 note_text = "Ten wynik jest warunkowy: akord będzie pełny jeśli dodamy brakujące dźwięki."
-                ctk.CTkLabel(frame, text=miss_text, font=("Arial", 13, "italic"), text_color="#F39C12").pack(anchor="w", padx=12, pady=(0, 2))
-                ctk.CTkLabel(frame, text=note_text, font=("Arial", 12), text_color="#95a5a6", wraplength=800, justify="left").pack(anchor="w", padx=12, pady=(0, 8))
+                ctk.CTkLabel(frame, text=miss_text, font=("Arial", 13, "italic"),
+                             text_color="#F39C12").pack(anchor="w", padx=12, pady=(0, 2))
+                ctk.CTkLabel(frame, text=note_text, font=("Arial", 12),
+                             text_color="#95a5a6", wraplength=800,
+                             justify="left").pack(anchor="w", padx=12, pady=(0, 8))
 
     def _map_degrees(self, pcs: List[int], root: int) -> List[Tuple[int, str]]:
         mapping: List[Tuple[int, str]] = []
-        # sort notes by ascending interval from root (0..11)
         sorted_by_interval = sorted(pcs, key=lambda p: (p - root) % 12)
         for p in sorted_by_interval:
             interval = (p - root) % 12
@@ -251,11 +482,4 @@ class ChordFinderView(ctk.CTkFrame):
             mapping.append((p, label))
         return mapping
 
-    def _update_selection_indicator(self):
-        if not self.selected_notes:
-            text = "Wybrane: —"
-        else:
-            sel = sorted(set(self.selected_notes))
-            names = [NOTE_NAMES[n % 12] for n in sel]
-            text = "Wybrane: " + ", ".join(names)
-        self.selection_indicator.configure(text=text)
+

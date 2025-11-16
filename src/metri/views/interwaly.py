@@ -32,7 +32,7 @@ class InterwalyView(ctk.CTkFrame):
         # Top bar with back button and header
         top_bar = ctk.CTkFrame(self, fg_color="transparent")
         top_bar.pack(fill="x", pady=(0, 20), padx=30)
-        
+
         # Back button on the left
         back_btn = ctk.CTkButton(
             top_bar,
@@ -45,7 +45,7 @@ class InterwalyView(ctk.CTkFrame):
             font=("Arial", 14)
         )
         back_btn.pack(side="left")
-        
+
         # Header title on the right
         ctk.CTkLabel(
             top_bar,
@@ -54,19 +54,10 @@ class InterwalyView(ctk.CTkFrame):
             text_color="#00BCD4"
         ).pack(side="left", padx=(20, 0))
 
-        # Track which sections are expanded (all collapsed by default)
-        self.section_states = {
-            "rodzaje": False,
-            "konsonanse": False,
-            "zastosowanie": False,
-            "klasyfikacja": False
-        }
+        # --- Theory sections ---
+        theory_container = ctk.CTkFrame(self, fg_color="transparent")
+        theory_container.pack(fill="x", padx=30, pady=(0, 10))
 
-        # Theory sections container
-        self.theory_container = ctk.CTkFrame(self, fg_color="transparent")
-        self.theory_container.pack(fill="x", padx=30, pady=(0, 10))
-
-        # Introduction (always visible, not collapsible)
         intro_text = (
             "Interwał w muzyce to podstawowa jednostka struktury dźwiękowej, określająca odległość pomiędzy dwoma dźwiękami – "
             "zarówno w sensie wysokościowym (liczba półtonów), jak i nazewnictwa stopniowego (liczba nazw dźwięków obejmowanych "
@@ -74,15 +65,12 @@ class InterwalyView(ctk.CTkFrame):
             "budowy akordów, a ich rozumienie jest kluczowe dla analizy i komponowania muzyki."
         )
         ctk.CTkLabel(
-            self.theory_container,
-            text=intro_text,
-            font=("Arial", 14),
-            text_color="#ECF0F1",
-            wraplength=820,
-            justify="left"
+            theory_container, text=intro_text, font=("Arial", 14), text_color="#ECF0F1",
+            wraplength=820, justify="left"
         ).pack(anchor="w", pady=(0, 15))
 
-        # Section: Rodzaje interwałów (collapsible)
+        # --- Collapsible sections ---
+        self.section_states = {}
         rodzaje_text = (
             "Interwały dzieli się ze względu na ich rozpiętość oraz charakter brzmieniowy:\n\n"
             "• Czyste (1, 4, 5, 8) – prymę, kwartę, kwintę i oktawę określa się jako czyste, ponieważ w systemie naturalnym "
@@ -94,9 +82,8 @@ class InterwalyView(ctk.CTkFrame):
             "Wartość interwału odwrotnego zawsze daje w sumie dziewięć (3 + 6 = 9), a jego charakter: "
             "czysty ↔ czysty, wielki ↔ mały, zwiększony ↔ zmniejszony."
         )
-        self._create_collapsible_section("rodzaje", "Rodzaje interwałów", rodzaje_text)
+        self._create_collapsible_section(theory_container, "rodzaje", "Rodzaje interwałów", rodzaje_text)
 
-        # Section: Konsonanse i dysonanse (collapsible)
         konsonanse_text = (
             "Pod względem brzmieniowym interwały dzielą się na:\n\n"
             "• Konsonanse – współbrzmienia łagodne i stabilne: prymę, oktawę, kwintę, tercję i sekstę (małą lub wielką); "
@@ -107,9 +94,8 @@ class InterwalyView(ctk.CTkFrame):
             "W muzyce tonalnej dysonanse pełnią rolę elementów napięcia, które kierują przebieg harmoniczny, "
             "podczas gdy konsonanse stanowią punkty odpoczynku i stabilizacji."
         )
-        self._create_collapsible_section("konsonanse", "Konsonanse i dysonanse", konsonanse_text)
+        self._create_collapsible_section(theory_container, "konsonanse", "Konsonanse i dysonanse", konsonanse_text)
 
-        # Section: Zastosowanie interwałów (collapsible)
         zastosowanie_text = (
             "Interwały są podstawą:\n\n"
             "• Melodii – określają odległości pomiędzy kolejnymi dźwiękami linii melodycznej, wpływając na jej ekspresję "
@@ -119,9 +105,8 @@ class InterwalyView(ctk.CTkFrame):
             "• Intonacji i temperacji – w praktyce wykonawczej różne systemy strojenia (np. czystość pitagorejska, "
             "temperacja równomierna) wpływają na rzeczywiste proporcje interwałów."
         )
-        self._create_collapsible_section("zastosowanie", "Zastosowanie interwałów", zastosowanie_text)
+        self._create_collapsible_section(theory_container, "zastosowanie", "Zastosowanie interwałów", zastosowanie_text)
 
-        # Section: Klasyfikacja interwałów (collapsible)
         klasyfikacja_text = (
             "Interwały można określić również jako:\n\n"
             "• Proste – nie przekraczają oktawy (np. seksta wielka, kwinta czysta).\n\n"
@@ -129,119 +114,141 @@ class InterwalyView(ctk.CTkFrame):
             "Zrozumienie interwałów pozwala na logiczne budowanie progresji akordów, konstrukcji skal, "
             "a także rozpoznawanie relacji tonalnych pomiędzy dźwiękami."
         )
-        self._create_collapsible_section("klasyfikacja", "Klasyfikacja interwałów", klasyfikacja_text)
+        self._create_collapsible_section(theory_container, "klasyfikacja", "Klasyfikacja interwałów", klasyfikacja_text)
 
-        # Examples section header
-        examples_header = ctk.CTkLabel(
-            self.theory_container, 
-            text="Poniżej znajdują się przykłady interwałów z dźwiękiem bazowym C, przedstawiające różne rodzaje i wielkości interwałów w odniesieniu do tego samego dźwięku podstawowego.",
-            font=("Arial", 14, "italic"),
-            text_color="#95a5a6",
-            wraplength=820,
-            justify="left"
-        )
-        examples_header.pack(anchor="w", pady=(15, 15))
+        # --- Interactive Examples Section ---
+        ctk.CTkLabel(
+            self, text="Interaktywne Przykłady", font=("Arial", 20, "bold"), text_color="#00BCD4"
+        ).pack(pady=(10, 5), padx=30)
 
-        intervals = [
-            ("Pryma (unison)", 0, "konsonans doskonały", "Podstawowy dźwięk akordu. Używana we wszystkich akordach jako punkt odniesienia.", ["C (dur)", "Cm (mol)", "wszystkie akordy"]),
-            ("Mała sekunda / Mała nona", 1, "dysonans ostry", "Bardzo napięty interwał, rzadko używany jako składnik akordu. Najczęściej pojawia się jako b9 w dominantach lub jako dźwięk przejściowy/opóźnienie.", ["C7b9", "akordy z b9/alterowane"]),
-            ("Wielka sekunda / Wielka nona", 2, "dysonans łagodny", "Napięcie wymagające rozwiązania. Używana w akordach sus2 jako zamiennik tercji.", ["Csus2", "akordy z dodaną 9"]),
-            ("Mała tercja / Mała decyma", 3, "konsonans niedoskonały", "Podstawa akordów molowych, daje smutny, melancholijny charakter.", ["Cm", "Cm7", "Cdim"]),
-            ("Wielka tercja / Wielka decyma", 4, "konsonans niedoskonały", "Podstawa akordów durowych, daje radosny, jasny charakter.", ["C (dur)", "C7", "Cmaj7"]),
-            ("Kwarta / Undecyma", 5, "konsonans doskonały", "Stabilny interwał, używany w akordach sus4 zamiast tercji.", ["Csus4", "akordy kwartowe"]),
-            ("Tryton", 6, "dysonans", "Najbardziej niestabilny interwał, dzieli oktawę na pół. Wymaga rozwiązania.", ["C7", "Cdim7"]),
-            ("Kwinta / Duodecyma", 7, "konsonans doskonały", "Najważniejszy interwał po prymie, podstawa większości akordów. Bardzo stabilny.", ["C (dur)", "Cm", "C7", "prawie wszystkie akordy"]),
-            ("Mała seksta / Mała tercdecyma", 8, "konsonans niedoskonały", "Ciepły, melancholijny interwał. Inwersja wielkiej tercji.", ["Cm6", "akordy z sekstą"]),
-            ("Wielka seksta / Wielka tercdecyma", 9, "konsonans niedoskonały", "Jasny, otwarty interwał. Często dodawany do akordów durowych.", ["C6", "C13"]),
-            ("Mała septyma", 10, "dysonans", "Napięcie dominantowe, wymaga rozwiązania. Podstawa akordów dominantowych.", ["C7", "Cm7"]),
-            ("Wielka septyma", 11, "dysonans ostry", "Bardzo napięty interwał, charakterystyczny dla akordów jazzowych.", ["Cmaj7"]),
-            ("Oktawa", 12, "konsonans doskonały", "Ten sam dźwięk o oktawę wyżej, absolutna stabilność.", ["wszystkie akordy (rozszerzenia)"]),
+        # Store interval data as instance variables
+        self.intervals = [
+            ("Pryma (unison)", 0, "konsonans doskonały",
+             "Podstawowy dźwięk akordu. Używana we wszystkich akordach jako punkt odniesienia.",
+             ["C (dur)", "Cm (mol)", "wszystkie akordy"]),
+            ("Mała sekunda / Mała nona", 1, "dysonans ostry",
+             "Bardzo napięty interwał, rzadko używany jako składnik akordu. Najczęściej pojawia się jako b9 w dominantach lub jako dźwięk przejściowy/opóźnienie.",
+             ["C7b9", "akordy z b9/alterowane"]),
+            ("Wielka sekunda / Wielka nona", 2, "dysonans łagodny",
+             "Napięcie wymagające rozwiązania. Używana w akordach sus2 jako zamiennik tercji.",
+             ["Csus2", "akordy z dodaną 9"]),
+            ("Mała tercja / Mała decyma", 3, "konsonans niedoskonały",
+             "Podstawa akordów molowych, daje smutny, melancholijny charakter.", ["Cm", "Cm7", "Cdim"]),
+            ("Wielka tercja / Wielka decyma", 4, "konsonans niedoskonały",
+             "Podstawa akordów durowych, daje radosny, jasny charakter.", ["C (dur)", "C7", "Cmaj7"]),
+            (
+            "Kwarta / Undecyma", 5, "konsonans doskonały", "Stabilny interwał, używany w akordach sus4 zamiast tercji.",
+            ["Csus4", "akordy kwartowe"]),
+            ("Tryton", 6, "dysonans", "Najbardziej niestabilny interwał, dzieli oktawę na pół. Wymaga rozwiązania.",
+             ["C7", "Cdim7"]),
+            ("Kwinta / Duodecyma", 7, "konsonans doskonały",
+             "Najważniejszy interwał po prymie, podstawa większości akordów. Bardzo stabilny.",
+             ["C (dur)", "Cm", "C7", "prawie wszystkie akordy"]),
+            ("Mała seksta / Mała tercdecyma", 8, "konsonans niedoskonały",
+             "Ciepły, melancholijny interwał. Inwersja wielkiej tercji.", ["Cm6", "akordy z sekstą"]),
+            ("Wielka seksta / Wielka tercdecyma", 9, "konsonans niedoskonały",
+             "Jasny, otwarty interwał. Często dodawany do akordów durowych.", ["C6", "C13"]),
+            (
+            "Mała septyma", 10, "dysonans", "Napięcie dominantowe, wymaga rozwiązania. Podstawa akordów dominantowych.",
+            ["C7", "Cm7"]),
+            (
+            "Wielka septyma", 11, "dysonans ostry", "Bardzo napięty interwał, charakterystyczny dla akordów jazzowych.",
+            ["Cmaj7"]),
+            ("Oktawa", 12, "konsonans doskonały", "Ten sam dźwięk o oktawę wyżej, absolutna stabilność.",
+             ["wszystkie akordy (rozszerzenia)"]),
         ]
+        self.note_names = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B", "C"]
 
-        note_names = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B", "C"]
+        # Main container for master-detail layout
+        main_container = ctk.CTkFrame(self, fg_color="transparent")
+        main_container.pack(fill="both", expand=True, padx=30, pady=(0, 10))
+        main_container.grid_columnconfigure(1, weight=1)
+        main_container.grid_rowconfigure(0, weight=1)
 
-        tbl = ctk.CTkFrame(self, fg_color="transparent")
-        tbl.pack(fill="x", padx=30, pady=(6, 18))
+        # Master frame (left, scrollable list)
+        self.master_frame = ctk.CTkScrollableFrame(main_container, width=300, label_text="Interwały")
+        self.master_frame.grid(row=0, column=0, sticky="ns", padx=(0, 20))
 
-        # Track expanded intervals
-        self.expanded_intervals = {}
+        # Detail frame (right, content changes)
+        self.detail_frame = ctk.CTkFrame(main_container, fg_color="transparent")
+        self.detail_frame.grid(row=0, column=1, sticky="nsew")
 
-        for name, semitones, konsonans_type, theory_info, chord_examples in intervals:
-            # Main row container
-            row_container = ctk.CTkFrame(tbl, fg_color="transparent")
-            row_container.pack(fill="x", pady=3)
-
-            # Determine if this is a primary interval (pryma, tercja, kwinta)
-            is_primary = any(keyword in name.lower() for keyword in ["pryma", "tercja", "kwinta"])
-            
-            # Determine if consonance or dissonance for coloring (only for primary intervals)
-            is_consonance = "konsonans" in konsonans_type.lower()
-            if is_primary:
-                name_color = "#00BCD4" if is_consonance else "#0288D1"  # Bright cyan for consonance, Dark blue for dissonance
-            else:
-                name_color = "#808080"  # Gray for non-primary intervals
-            
-            # Collapsed row (always visible)
-            row = ctk.CTkFrame(row_container, fg_color="#2b2b2b", corner_radius=8)
-            row.pack(fill="x", pady=3)
-
-            left = ctk.CTkFrame(row, fg_color="transparent")
-            left.pack(side="left", fill="x", expand=True, padx=18, pady=10)
-            note = note_names[semitones] if semitones < len(note_names) else "?"
-            
-            # Interval name with color coding
-            ctk.CTkLabel(left, text=f"{name}", font=("Arial", 16, "bold"), text_color=name_color).pack(anchor="w")
-
-            # Right side: example notes, semitone count, Play and Expand buttons
-            right = ctk.CTkFrame(row, fg_color="transparent")
-            right.pack(side="right", padx=18, pady=10)
-            
-            right_top = ctk.CTkFrame(right, fg_color="transparent")
-            right_top.pack()
-            
-            ctk.CTkLabel(right_top, text=f"C — {note}", font=("Arial", 16, "bold"), text_color="#ECF0F1").pack(side="left", padx=(0, 20))
-            ctk.CTkLabel(right_top, text=f"{semitones} półtonów", font=("Arial", 13), text_color="#95a5a6").pack(side="left", padx=(0, 15))
-            
+        # Populate the master list
+        for index, (name, *_) in enumerate(self.intervals):
             btn = ctk.CTkButton(
-                right_top, 
-                text="▶", 
-                width=45, 
-                height=36, 
-                font=("Arial", 16),
-                fg_color="#0097A7",
-                hover_color="#00838F",
-                command=lambda s=semitones: self._play_interval(s)
+                self.master_frame,
+                text=name.split("/")[0].strip(),  # Show the simple name
+                command=lambda i=index: self._show_details(i)
             )
-            btn.pack(side="left", padx=(0, 10))
-            
-            # Expand/collapse button
-            expand_btn = ctk.CTkButton(
-                right_top, 
-                text="▼", 
-                width=38, 
-                height=36,
-                font=("Arial", 16),
-                fg_color="#555555",
-                hover_color="#777777",
-                command=lambda rc=row_container, n=name, st=semitones, kt=konsonans_type, ti=theory_info, ce=chord_examples: self._toggle_details(rc, n, st, kt, ti, ce)
-            )
-            expand_btn.pack(side="left")
+            btn.pack(fill="x", pady=2, padx=5)
 
-            # Store reference for toggling
-            self.expanded_intervals[semitones] = {"container": row_container, "expanded": False, "button": expand_btn}
-            self.expanded_intervals[semitones] = {"container": row_container, "expanded": False, "button": expand_btn}
+        # Show the first interval by default
+        self._show_details(0)
+
+    def _show_details(self, index):
+        """Clear the detail frame and render the selected interval's info."""
+        # Clear any existing widgets
+        for widget in self.detail_frame.winfo_children():
+            widget.destroy()
+
+        # Get the selected interval data
+        name, semitones, konsonans_type, theory_info, chord_examples = self.intervals[index]
+
+        # --- Header ---
+        header_frame = ctk.CTkFrame(self.detail_frame, fg_color="transparent")
+        header_frame.pack(fill="x", pady=(0, 15))
+
+        note = self.note_names[semitones % len(self.note_names)]
+        ctk.CTkLabel(header_frame, text=name, font=("Arial", 24, "bold"), text_color="#00BCD4").pack(anchor="w")
+        ctk.CTkLabel(header_frame, text=f"C — {note} ({semitones} półtonów)", font=("Arial", 16),
+                     text_color="#ECF0F1").pack(anchor="w", pady=(2, 0))
+
+        # --- Play Button ---
+        ctk.CTkButton(
+            self.detail_frame, text="▶ Odtwórz", width=120, height=40,
+            font=("Arial", 16), fg_color="#0097A7", hover_color="#00838F",
+            command=lambda s=semitones: self._play_interval(s)
+        ).pack(anchor="w", pady=(0, 20))
+
+        # --- Details Content ---
+        content_frame = ctk.CTkFrame(self.detail_frame, fg_color="#2b2b2b", corner_radius=8)
+        content_frame.pack(fill="both", expand=True, pady=(0, 10))
+
+        if "/" in name:
+            ctk.CTkLabel(
+                content_frame,
+                text="ℹ️  Interwał złożony: nazwa po lewej stronie / to interwał prosty (w obrębie oktawy), "
+                     "nazwa po prawej to interwał złożony (przekracza oktawę o te same stopnie).",
+                font=("Arial", 12, "italic"), text_color="#4FC3F7", wraplength=500, justify="left"
+            ).pack(anchor="w", padx=20, pady=(12, 8))
+
+        is_consonance = "konsonans" in konsonans_type.lower()
+        type_color = "#00BCD4" if is_consonance else "#0288D1"
+
+        ctk.CTkLabel(
+            content_frame, text=f"Typ: {konsonans_type}", font=("Arial", 14, "bold"), text_color=type_color
+        ).pack(anchor="w", padx=20, pady=(6, 6))
+
+        ctk.CTkLabel(
+            content_frame, text=theory_info, font=("Arial", 13), text_color="#ECF0F1",
+            wraplength=500, justify="left"
+        ).pack(anchor="w", padx=20, pady=(0, 10))
+
+        chords_text = "Występuje w akordach: " + ", ".join(chord_examples)
+        ctk.CTkLabel(
+            content_frame, text=chords_text, font=("Arial", 12, "italic"), text_color="#95a5a6",
+            wraplength=500, justify="left"
+        ).pack(anchor="w", padx=20, pady=(0, 12))
 
     def _on_back(self):
         if callable(self.on_back):
             self.on_back()
 
-    def _create_collapsible_section(self, section_id, title, content):
+    def _create_collapsible_section(self, parent, section_id, title, content):
         """Create a collapsible theory section."""
-        # Section container
-        section_container = ctk.CTkFrame(self.theory_container, fg_color="transparent")
+        section_container = ctk.CTkFrame(parent, fg_color="transparent")
         section_container.pack(fill="x", pady=(0, 10))
 
-        # Header with title and expand button
         header = ctk.CTkFrame(section_container, fg_color="#2c2c2c", corner_radius=10)
         header.pack(fill="x")
 
@@ -249,230 +256,132 @@ class InterwalyView(ctk.CTkFrame):
         header_content.pack(fill="x", padx=20, pady=12)
 
         ctk.CTkLabel(
-            header_content,
-            text=title,
-            font=("Arial", 17, "bold"),
-            text_color="#00BCD4"
+            header_content, text=title, font=("Arial", 17, "bold"), text_color="#00BCD4"
         ).pack(side="left")
 
         expand_btn = ctk.CTkButton(
-            header_content,
-            text="▼",
-            width=35,
-            height=30,
-            font=("Arial", 14),
-            fg_color="#0277BD",
-            hover_color="#01579B",
-            command=lambda: self._toggle_section(section_id, section_container, expand_btn, content)
+            header_content, text="▼", width=35, height=30, font=("Arial", 14),
+            fg_color="#0277BD", hover_color="#01579B",
+            command=lambda: self._toggle_section(section_id)
         )
         expand_btn.pack(side="right")
 
-        # Store reference
+        content_frame = ctk.CTkFrame(section_container, fg_color="#2c2c2c", corner_radius=10)
+        ctk.CTkLabel(
+            content_frame, text=content, font=("Arial", 13), text_color="#ECF0F1",
+            wraplength=800, justify="left"
+        ).pack(anchor="w", padx=25, pady=(10, 15))
+
         self.section_states[section_id] = {
             "container": section_container,
             "button": expand_btn,
-            "expanded": False,
-            "content": content
+            "content_frame": content_frame,
+            "expanded": False
         }
+        content_frame.pack_forget()
 
-    def _toggle_section(self, section_id, container, button, content):
+    def _toggle_section(self, section_id):
         """Toggle a theory section."""
         state = self.section_states[section_id]
-        
         if state["expanded"]:
-            # Collapse: remove content frame
-            for widget in container.winfo_children():
-                if widget != container.winfo_children()[0]:  # Keep header
-                    widget.destroy()
-            button.configure(text="▼")
+            state["content_frame"].pack_forget()
+            state["button"].configure(text="▼")
             state["expanded"] = False
         else:
-            # Expand: create content frame
-            content_frame = ctk.CTkFrame(container, fg_color="#2c2c2c", corner_radius=10)
-            content_frame.pack(fill="x", pady=(2, 0))
-
-            ctk.CTkLabel(
-                content_frame,
-                text=content,
-                font=("Arial", 13),
-                text_color="#ECF0F1",
-                wraplength=800,
-                justify="left"
-            ).pack(anchor="w", padx=25, pady=(10, 15))
-
-            button.configure(text="▲")
+            state["content_frame"].pack(fill="x", pady=(2, 0))
+            state["button"].configure(text="▲")
             state["expanded"] = True
 
-    def _toggle_details(self, row_container, name, semitones, konsonans_type, theory_info, chord_examples):
-        """Toggle the expanded details panel for an interval."""
-        interval_data = self.expanded_intervals[semitones]
-        
-        if interval_data["expanded"]:
-            # Collapse: remove details frame
-            for widget in row_container.winfo_children():
-                if isinstance(widget, ctk.CTkFrame) and widget.cget("fg_color") == "#1e1e1e":
-                    widget.destroy()
-            interval_data["expanded"] = False
-            interval_data["button"].configure(text="▼")
-        else:
-            # Expand: create details frame
-            details_frame = ctk.CTkFrame(row_container, fg_color="#1e1e1e", corner_radius=8)
-            details_frame.pack(fill="x", pady=(0, 3), padx=25)
-            
-            # Check if this is a compound interval (has /)
-            if "/" in name:
-                compound_explanation = ctk.CTkLabel(
-                    details_frame,
-                    text="ℹ️  Interwał złożony: nazwa po lewej stronie / to interwał prosty (w obrębie oktawy), "
-                         "nazwa po prawej to interwał złożony (przekracza oktawę o te same stopnie).",
-                    font=("Arial", 12, "italic"),
-                    text_color="#4FC3F7",
-                    wraplength=780,
-                    justify="left"
-                )
-                compound_explanation.pack(anchor="w", padx=20, pady=(12, 8))
-            
-            # Type of consonance/dissonance with color
-            is_consonance = "konsonans" in konsonans_type.lower()
-            type_color = "#00BCD4" if is_consonance else "#0288D1"
-            
-            type_label = ctk.CTkLabel(
-                details_frame,
-                text=f"Typ: {konsonans_type}",
-                font=("Arial", 14, "bold"),
-                text_color=type_color
-            )
-            type_label.pack(anchor="w", padx=20, pady=(6, 6))
-            
-            # Theoretical info
-            info_label = ctk.CTkLabel(
-                details_frame,
-                text=theory_info,
-                font=("Arial", 13),
-                text_color="#ECF0F1",
-                wraplength=780,
-                justify="left"
-            )
-            info_label.pack(anchor="w", padx=20, pady=(0, 10))
-            
-            # Chord examples
-            chords_text = "Występuje w akordach: " + ", ".join(chord_examples)
-            chords_label = ctk.CTkLabel(
-                details_frame,
-                text=chords_text,
-                font=("Arial", 12, "italic"),
-                text_color="#95a5a6",
-                wraplength=780,
-                justify="left"
-            )
-            chords_label.pack(anchor="w", padx=20, pady=(0, 12))
-            
-            interval_data["expanded"] = True
-            interval_data["button"].configure(text="▲")
+    @staticmethod
+    def _build_sound(freq: float, duration: float, sr: int):
+        """Synthesize a richer tone and return it as a Pygame Sound object."""
+        t = np.linspace(0, duration, int(sr * duration), endpoint=False)
+
+        # Harmonics for a richer tone
+        harmonics = 6
+        amps = np.array([1.0 / (n ** 1.1) for n in range(1, harmonics + 1)])
+
+        wave = np.zeros_like(t)
+        for i, a in enumerate(amps, start=1):
+            wave += a * np.sin(2 * np.pi * i * freq * t)
+
+        # ADSR envelope
+        attack = min(0.02, duration * 0.15)
+        decay = min(0.06, duration * 0.15)
+        release = min(0.12, duration * 0.25)
+        sustain_level = 0.78
+        sustain_time = max(0.0, duration - (attack + decay + release))
+
+        env = np.zeros_like(t)
+        idx = 0
+        a_end = int(sr * attack)
+        if a_end > 0:
+            env[:a_end] = np.linspace(0.0, 1.0, a_end)
+            idx = a_end
+
+        d_end = idx + int(sr * decay)
+        if d_end > idx:
+            env[idx:d_end] = np.linspace(1.0, sustain_level, d_end - idx)
+            idx = d_end
+
+        s_end = idx + int(sr * sustain_time)
+        if s_end > idx:
+            env[idx:s_end] = sustain_level
+            idx = s_end
+
+        if idx < len(env):
+            env[idx:] = np.linspace(sustain_level, 0.0, len(env) - idx)
+
+        wave *= env
+
+        # Normalize and convert to 16-bit PCM
+        maxv = np.max(np.abs(wave))
+        if maxv > 0:
+            wave = wave * (0.9 / maxv)
+        audio = (wave * 32767).astype(np.int16)
+
+        # Handle stereo/mono output
+        init = pygame.mixer.get_init()
+        channels = init[2] if init else 1
+        if channels == 2:
+            stereo = np.column_stack((audio, audio))
+            return pygame.sndarray.make_sound(stereo)
+        return pygame.sndarray.make_sound(audio)
 
     def _play_interval(self, semitones: int, duration: float = 0.8):
-        """Play base note (C4) then the target note sequentially in a background thread."""
+        """Play base note (C4) and a target note sequentially in a background thread."""
         if not self.audio_ok:
             print("Audio not available")
             return
 
-        sr = 44100
-        t = np.linspace(0, duration, int(sr * duration), endpoint=False)
-        f_base = self.BASE_FREQ_C4
-        f_target = f_base * (2 ** (semitones / 12.0))
+        def prepare_and_play():
+            sr = 44100
+            f_base = self.BASE_FREQ_C4
+            f_target = f_base * (2 ** (semitones / 12.0))
 
-        # Helper to build a pygame Sound for a given frequency
-        def build_sound(freq: float):
-            """Synthesize a richer tone: harmonics, ADSR envelope (no vibrato).
+            # Check cache first
+            key1 = f"note_{int(round(f_base))}_{int(duration * 1000)}"
+            key2 = f"note_{int(round(f_target))}_{int(duration * 1000)}"
 
-            Returns a pygame Sound. Caches by rounded frequency and duration.
-            """
-            key = f"note_{int(round(freq))}_{int(duration*1000)}"
-            if key in self._sound_cache:
-                return self._sound_cache[key]
+            snd1 = self._sound_cache.get(key1)
+            if snd1 is None:
+                snd1 = self._build_sound(f_base, duration, sr)
+                self._sound_cache[key1] = snd1
 
-            # synthesis params
-            sr_local = sr
-            t_local = t
-            # harmonics: fundamental + partials
-            harmonics = 6
-            # amplitude rolloff for partials (gentle)
-            amps = np.array([1.0 / (n ** 1.1) for n in range(1, harmonics + 1)])
+            snd2 = self._sound_cache.get(key2)
+            if snd2 is None:
+                snd2 = self._build_sound(f_target, duration, sr)
+                self._sound_cache[key2] = snd2
 
-            # No vibrato: use unity modulation
-            freq_mod = np.ones_like(t_local)
-
-            wave = np.zeros_like(t_local)
-            for i, a in enumerate(amps, start=1):
-                # each partial uses the modulated fundamental multiplied by partial index
-                wave += a * np.sin(2 * np.pi * i * freq * freq_mod * t_local)
-
-            # ADSR envelope
-            attack = min(0.02, duration * 0.15)
-            decay = min(0.06, duration * 0.15)
-            release = min(0.12, duration * 0.25)
-            sustain_level = 0.78
-            sustain_time = max(0.0, duration - (attack + decay + release))
-
-            env = np.zeros_like(t_local)
-            idx = 0
-            # attack
-            a_end = int(sr_local * attack)
-            if a_end > 0:
-                env[:a_end] = np.linspace(0.0, 1.0, a_end)
-                idx = a_end
-
-            # decay
-            d_end = idx + int(sr_local * decay)
-            if d_end > idx:
-                env[idx:d_end] = np.linspace(1.0, sustain_level, d_end - idx)
-                idx = d_end
-
-            # sustain
-            s_end = idx + int(sr_local * sustain_time)
-            if s_end > idx:
-                env[idx:s_end] = sustain_level
-                idx = s_end
-
-            # release
-            if idx < len(env):
-                env[idx:] = np.linspace(sustain_level, 0.0, len(env) - idx)
-
-            wave = wave * env
-
-            # subtle global gain and normalization
-            maxv = np.max(np.abs(wave))
-            if maxv > 0:
-                wave = wave * (0.9 / maxv)
-
-            audio = (wave * 32767).astype(np.int16)
-
-            init = pygame.mixer.get_init()
-            channels = init[2] if init and len(init) >= 3 else 2
-
-            if channels == 2:
-                stereo = np.column_stack((audio, audio))
-                snd = pygame.sndarray.make_sound(stereo)
-            else:
-                snd = pygame.sndarray.make_sound(audio)
-
-            self._sound_cache[key] = snd
-            return snd
-
-        snd1 = build_sound(f_base)
-        snd2 = build_sound(f_target)
-
-        # Play sequentially without blocking the UI
-        def play_sequence():
+            # Play sequence
             try:
                 ch = snd1.play()
-                # Use sound length; fallback to duration argument
-                length = snd1.get_length() if hasattr(snd1, 'get_length') else duration
-                # Wait for the first sound to finish (reduced wait time)
-                threading.Event().wait(length + 0.02)
+                if ch:
+                    while ch.get_busy():
+                        pygame.time.wait(10)
                 snd2.play()
             except Exception as e:
-                print(f"play sequence failed: {e}")
+                print(f"Playback failed: {e}")
 
-        thr = threading.Thread(target=play_sequence, daemon=True)
-        thr.start()
+        # Run in a background thread to keep UI responsive
+        threading.Thread(target=prepare_and_play, daemon=True).start()
