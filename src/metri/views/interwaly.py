@@ -40,8 +40,8 @@ class InterwalyView(ctk.CTkFrame):
             command=self._on_back,
             width=130,
             height=40,
-            fg_color="#555555",
-            hover_color="#777777",
+            fg_color="#9b75a7",
+            hover_color="#552564",
             font=("Arial", 14)
         )
         back_btn.pack(side="left")
@@ -51,7 +51,7 @@ class InterwalyView(ctk.CTkFrame):
             top_bar,
             text="Interwały",
             font=("Arial", 28, "bold"),
-            text_color="#00BCD4"
+            text_color="#25b4b6"
         ).pack(side="left", padx=(20, 0))
 
         # --- Theory sections ---
@@ -65,7 +65,7 @@ class InterwalyView(ctk.CTkFrame):
             "budowy akordów, a ich rozumienie jest kluczowe dla analizy i komponowania muzyki."
         )
         ctk.CTkLabel(
-            theory_container, text=intro_text, font=("Arial", 14), text_color="#ECF0F1",
+            theory_container, text=intro_text, font=("Arial", 14), text_color=("#333333", "#e0e0e0"),
             wraplength=820, justify="left"
         ).pack(anchor="w", pady=(0, 15))
 
@@ -118,7 +118,7 @@ class InterwalyView(ctk.CTkFrame):
 
         # --- Interactive Examples Section ---
         ctk.CTkLabel(
-            self, text="Interaktywne Przykłady", font=("Arial", 20, "bold"), text_color="#00BCD4"
+            self, text="Interaktywne Przykłady", font=("Arial", 20, "bold"), text_color="#25b4b6"
         ).pack(pady=(10, 5), padx=30)
 
         # Store interval data as instance variables
@@ -201,17 +201,17 @@ class InterwalyView(ctk.CTkFrame):
         note = self.note_names[semitones % len(self.note_names)]
         ctk.CTkLabel(header_frame, text=name, font=("Arial", 24, "bold"), text_color="#00BCD4").pack(anchor="w")
         ctk.CTkLabel(header_frame, text=f"C — {note} ({semitones} półtonów)", font=("Arial", 16),
-                     text_color="#ECF0F1").pack(anchor="w", pady=(2, 0))
+                     text_color=("#333333", "#e0e0e0")).pack(anchor="w", pady=(2, 0))
 
         # --- Play Button ---
         ctk.CTkButton(
             self.detail_frame, text="▶ Odtwórz", width=120, height=40,
-            font=("Arial", 16), fg_color="#0097A7", hover_color="#00838F",
+            font=("Arial", 16), fg_color="#61be5f", hover_color="#25b4b6",
             command=lambda s=semitones: self._play_interval(s)
         ).pack(anchor="w", pady=(0, 20))
 
         # --- Details Content ---
-        content_frame = ctk.CTkFrame(self.detail_frame, fg_color="#2b2b2b", corner_radius=8)
+        content_frame = ctk.CTkFrame(self.detail_frame, fg_color=("#ffffff", "#2b2b2b"), corner_radius=8)
         content_frame.pack(fill="both", expand=True, pady=(0, 10))
 
         if "/" in name:
@@ -219,7 +219,7 @@ class InterwalyView(ctk.CTkFrame):
                 content_frame,
                 text="ℹ️  Interwał złożony: nazwa po lewej stronie / to interwał prosty (w obrębie oktawy), "
                      "nazwa po prawej to interwał złożony (przekracza oktawę o te same stopnie).",
-                font=("Arial", 12, "italic"), text_color="#4FC3F7", wraplength=500, justify="left"
+                font=("Arial", 12, "italic"), text_color=("#333333", "#e0e0e0"), wraplength=500, justify="left"
             ).pack(anchor="w", padx=20, pady=(12, 8))
 
         is_consonance = "konsonans" in konsonans_type.lower()
@@ -230,7 +230,7 @@ class InterwalyView(ctk.CTkFrame):
         ).pack(anchor="w", padx=20, pady=(6, 6))
 
         ctk.CTkLabel(
-            content_frame, text=theory_info, font=("Arial", 13), text_color="#ECF0F1",
+            content_frame, text=theory_info, font=("Arial", 13), text_color=("#333333", "#e0e0e0"),
             wraplength=500, justify="left"
         ).pack(anchor="w", padx=20, pady=(0, 10))
 
@@ -249,26 +249,26 @@ class InterwalyView(ctk.CTkFrame):
         section_container = ctk.CTkFrame(parent, fg_color="transparent")
         section_container.pack(fill="x", pady=(0, 10))
 
-        header = ctk.CTkFrame(section_container, fg_color="#2c2c2c", corner_radius=10)
+        header = ctk.CTkFrame(section_container, fg_color=("#e0e0e0", "#2c2c2c"), corner_radius=10)
         header.pack(fill="x")
 
         header_content = ctk.CTkFrame(header, fg_color="transparent")
         header_content.pack(fill="x", padx=20, pady=12)
 
         ctk.CTkLabel(
-            header_content, text=title, font=("Arial", 17, "bold"), text_color="#00BCD4"
+            header_content, text=title, font=("Arial", 17, "bold"), text_color="#25b4b6"
         ).pack(side="left")
 
         expand_btn = ctk.CTkButton(
             header_content, text="▼", width=35, height=30, font=("Arial", 14),
-            fg_color="#0277BD", hover_color="#01579B",
+            fg_color="#552564", hover_color="#9b75a7",
             command=lambda: self._toggle_section(section_id)
         )
         expand_btn.pack(side="right")
 
-        content_frame = ctk.CTkFrame(section_container, fg_color="#2c2c2c", corner_radius=10)
+        content_frame = ctk.CTkFrame(section_container, fg_color=("#f2f2f2", "#1e1e1e"), corner_radius=10)
         ctk.CTkLabel(
-            content_frame, text=content, font=("Arial", 13), text_color="#ECF0F1",
+            content_frame, text=content, font=("Arial", 13), text_color=("#333333", "#e0e0e0"),
             wraplength=800, justify="left"
         ).pack(anchor="w", padx=25, pady=(10, 15))
 
