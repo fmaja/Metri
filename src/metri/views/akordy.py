@@ -12,11 +12,11 @@ class AkordyView(ctk.CTkFrame):
     """
 
     BASE_FREQ_C4 = 261.6256
-    ACCENT_CYAN = "#25b4b6"
-    ACCENT_GOLD = "#cca839"
-    ACCENT_PURPLE = "#552564"
-    ACCENT_GREEN = "#61be5f"
-    ACCENT_LAVENDER = "#9b75a7"
+    ACCENT_CYAN = ("#25b4b6", "#30c8ca")  # A bright, highly visible cyan
+    ACCENT_GOLD = "#cca839"  # A warm, rich gold
+    ACCENT_PURPLE = ("#552564", "#7b538b")  # Dark purple for light mode, lighter for dark
+    ACCENT_GREEN = ("#61be5f", "#7fdb7d")  # A vibrant green, slightly lighter in dark mode
+    ACCENT_LAVENDER = ("#9b75a7", "#b899c4")  # A soft lavender, adjusted for dark mode
 
     def __init__(self, master, on_back=None, **kwargs):
         super().__init__(master, **kwargs)
@@ -45,8 +45,8 @@ class AkordyView(ctk.CTkFrame):
             command=self._on_back,
             width=130,
             height=40,
-            fg_color=(self.ACCENT_LAVENDER, "#333333"),
-            hover_color=(self.ACCENT_PURPLE, "#444444"),
+            fg_color=self.ACCENT_LAVENDER,
+            hover_color=self.ACCENT_PURPLE,
             font=("Roboto", 14)
         )
         back_btn.pack(side="left")
