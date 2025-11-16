@@ -1,0 +1,24 @@
+{% extends "base_ui.html" %}
+
+{% block title %}Metri — Ćwiczenia{% endblock %}
+
+{% block header_title %}Ćwiczenia{% endblock %}
+
+{% block content %}
+  <section style="max-width:1100px;margin:0 auto;">
+    <div class="card" style="padding:20px;">
+      <h3 style="color:var(--primary);">Gdzie jest dźwięk E4?</h3>
+      <p class="muted">Kliknij na klawisz poniżej, aby odpowiedzieć.</p>
+
+      <!-- simple keyboard placeholder -->
+      <div style="margin-top:16px;background:linear-gradient(#fff,#f3f3f3);padding:12px;border-radius:10px;overflow:auto;">
+        <div style="height:90px;background:#fff;border-radius:6px;display:flex;align-items:center;justify-content:center;color:var(--muted);">[Keyboard SVG placeholder]</div>
+      </div>
+
+      <div style="margin-top:14px;display:flex;gap:10px;">
+        <button class="btn btn--primary">Sprawdź</button>
+        <a class="btn" href="/dashboard">Powrót</a>
+      </div>
+    </div>
+  </section>
+{% endblock %}

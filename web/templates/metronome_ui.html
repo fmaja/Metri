@@ -1,0 +1,28 @@
+{% extends "base_ui.html" %}
+
+{% block title %}Metri — Metronom{% endblock %}
+
+{% block header_title %}Metronom{% endblock %}
+
+{% block content %}
+  <section style="max-width:900px;margin:0 auto;">
+    <div class="card center" style="flex-direction:column;padding:32px;">
+      <div style="font-size:72px;font-weight:700;color:var(--primary);">78</div>
+      <div class="muted">BPM</div>
+
+      <div style="width:100%;margin-top:18px;">
+        <div class="progress">
+          <div class="progress__fill" style="width:39%"></div>
+        </div>
+      </div>
+
+      <div style="margin-top:18px;">
+        <button class="btn btn--positive">START</button>
+      </div>
+
+      <div style="margin-top:12px;">
+        <a class="btn" href="/dashboard">Powrót</a>
+      </div>
+    </div>
+  </section>
+{% endblock %}
