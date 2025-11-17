@@ -8,7 +8,7 @@ from .chord_finder import ChordFinderView
 import os
 from PIL import Image
 from datetime import datetime
-from typing import Optional, Type, Tuple
+from typing import Optional, Type, Tuple, Callable
 
 
 class MainScreen:
@@ -22,16 +22,21 @@ class MainScreen:
     ACCENT_GOLD = "#cca839"
     COLOR_RED = "#E74C3C"
     COLOR_GREEN = "#2ECC71"
+    COLOR_LIGHT_GREEN = "#A8E6A8"
     COLOR_BLUE = "#3498DB"
+    ACCENT_PURPLE = "#552564"
 
-    # Mapowanie modułów na przyciski w menu i ich ikony
+    # NOWY KOLOR: Jasny szary dla niezrobionej części paska postępu
+    COLOR_PROGRESS_TRACK = "#E0E0E0"
+
+    # Mapowanie modułów na przyciski w menu i ich ikony (ZAKTUALIZOWANE O EMOTIKONY)
     MODULES = {
-        "Sesja Dziennna": {"View": DayView, "Icon": "practice", "Color": ACCENT_GOLD},
-        "Kalendarz": {"View": CalendarView, "Icon": "calendar", "Color": COLOR_BLUE},
-        "Quizy": {"View": QuizView, "Icon": "quiz", "Color": COLOR_RED},
-        "Teoria": {"View": TheoryView, "Icon": "theory", "Color": ACCENT_CYAN},
-        "Metronom": {"View": MetronomeView, "Icon": "metronome", "Color": COLOR_BLUE},
-        "Tetekror": {"View": ChordFinderView, "Icon": "search", "Color": COLOR_GREEN},
+        "Sesja Dziennna": {"View": DayView, "Icon": "practice", "Color": COLOR_BLUE, "Emoji": "🎸"},
+        "Quizy": {"View": QuizView, "Icon": "quiz", "Color": COLOR_LIGHT_GREEN, "Emoji": "🧠"},
+        "Teoria": {"View": TheoryView, "Icon": "theory", "Color": ACCENT_CYAN, "Emoji": "📚"},
+        "Metronom": {"View": MetronomeView, "Icon": "metronome", "Color": ACCENT_GOLD, "Emoji": "⏱️"},
+        "Tetekror": {"View": ChordFinderView, "Icon": "search", "Color": ACCENT_PURPLE, "Emoji": "🔎"},
+        "Kalendarz": {"View": CalendarView, "Icon": "calendar", "Color": ACCENT_CYAN, "Emoji": "📅"},
     }
 
     BUTTON_ORDER = [
@@ -50,19 +55,22 @@ class MainScreen:
         ctk.set_appearance_mode("Light")
         self.current_theme = ctk.get_appearance_mode()
 
-        self.container = ctk.CTkFrame(master, fg_color=self.BG_MAIN)
+        self.container = ctk.CTkFrame(master, fg_color=self._get_main_bg_color())
         self.container.pack(fill="both", expand=True)
 
-        # Zmienne referencji
         self.current_view_frame: Optional[ctk.CTkFrame] = None
         self.current_view_object = None
         self.stats = {}
+        self.content_frame: Optional[ctk.CTkFrame] = None
 
-        # Inicjalizacja UI
         self._get_day_view_stats()
-        self._create_menu_frame()  # Ta metoda teraz zawiera tworzenie paska
+        self._create_menu_frame()
 
     # --- Narzędzia ---
+
+    def _get_main_bg_color(self):
+        """Pobiera kolor tła dla głównego kontenera w zależności od motywu."""
+        return self.BG_MAIN if ctk.get_appearance_mode() == "Light" else "#1a1a1a"
 
     def _get_icon(self, name: str, size: int = 40) -> Optional[ctk.CTkImage]:
         """Ładuje ikonę na podstawie nazwy."""
@@ -72,6 +80,14 @@ class MainScreen:
             return ctk.CTkImage(light_image=Image.open(icon_path), size=(size, size))
         except:
             return None
+
+    def _get_text_color(self):
+        """Pobiera główny kolor tekstu. Ustawiony na BIAŁY dla Cyjanowej karty."""
+        return "white"
+
+    def _get_secondary_text_color(self):
+        """Pobiera drugorzędny kolor tekstu (nagłówki)."""
+        return "#EEEEEE"  # Jasnoszary
 
     def _get_day_view_stats(self):
         """Pobiera statystyki dzienne/tygodniowe."""
@@ -103,88 +119,105 @@ class MainScreen:
         return '#%02x%02x%02x' % tuple(new_rgb)
 
     # --- Elementy UI Menu Głównego ---
-
+    # ... (metody _create_header_bar, _get_theme_icon, _create_menu_frame bez zmian) ...
     def _create_header_bar(self, master_frame: ctk.CTkFrame):
-        """Tworzy pasek nagłówka jako część ramki menu."""
+        """Tworzy pasek nagłówka jako część ramki menu, identyczny z TheoryView, ale bez 'Wróć'."""
 
-        header_bar = ctk.CTkFrame(master_frame, fg_color=self.HEADER_BG, height=60, corner_radius=0)
-        header_bar.pack(fill="x", side="top", padx=0, pady=0)
-        header_bar.grid_columnconfigure(1, weight=1)
+        # WYMIARY Paska zgodnie z TheoryView
+        self.header = ctk.CTkFrame(master_frame, fg_color=self.HEADER_BG, height=72, corner_radius=12)
+        self.header.pack(fill="x", side="top", padx=10, pady=(20, 10))
+        self.header.grid_propagate(False)
+        self.header.columnconfigure(1, weight=1)
+        self.header.rowconfigure(0, weight=1)
 
-        # 1. Logo/Ikona
-        logo_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "assets", "icon.png")
-        if os.path.exists(logo_path):
-            app_icon = self._get_icon("icon", size=40)
-            ctk.CTkLabel(header_bar, image=app_icon, text="").grid(row=0, column=0, padx=(20, 10), pady=10, sticky="w")
+        # --- LEWA STRONA: IKONA APLIKACJI I TYTUŁ ---
+        left = ctk.CTkFrame(self.header, fg_color="transparent")
+        left.grid(row=0, column=0, sticky="w", padx=(18, 10))
 
-        # 2. Tytuł (Metri)
-        ctk.CTkLabel(
-            header_bar,
-            text="Metri",
-            font=ctk.CTkFont(size=20, weight="bold"),
-            text_color=self.ACCENT_CYAN
-        ).grid(row=0, column=1, padx=0, pady=10, sticky="w")
+        icon_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "assets", "icon.png")
+        if os.path.exists(icon_path):
+            app_icon = ctk.CTkImage(light_image=Image.open(icon_path), size=(60, 65))
+            ctk.CTkLabel(
+                left, image=app_icon, text=""
+            ).pack(side="left", anchor="center")
 
-        # 3. Zmiana Motywu
-        self.theme_button = ctk.CTkButton(
-            header_bar,
-            text="☀️ Tryb Jasny" if self.current_theme == "Light" else "🌙 Tryb Ciemny",
-            command=self._toggle_theme,
-            width=120,
-            height=35,
-            font=ctk.CTkFont(size=14),
-            fg_color="#E0E0E0",
-            text_color="#333333",
-            hover_color="#CCCCCC"
-        )
-        self.theme_button.grid(row=0, column=2, padx=(10, 10), sticky="e")
+        # Tytuł
+        title_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "assets", "name.png")
+        if os.path.exists(icon_path):
+            title_icon = ctk.CTkImage(light_image=Image.open(title_path), size=(160, 40))
+            ctk.CTkLabel(
+                left, image=title_icon, text=""
+            ).pack(side="left", anchor="center", padx=(50, 18))
 
-        # 4. Przycisk Wyjdź
+        # --- PRAWA STRONA: PRZEŁĄCZNIK MOTYWU I WYJDŹ ---
+        right = ctk.CTkFrame(self.header, fg_color="transparent")
+        right.grid(row=0, column=2, sticky="e", padx=(10, 18))
+
+        # 1. Przycisk Wyjdź
         ctk.CTkButton(
-            header_bar,
-            text="✕ Wyjdź",
+            right,
+            text="✕",
             command=self.master.quit,
-            width=100,
-            height=35,
-            font=ctk.CTkFont(size=14, weight="bold"),
+            width=44, height=44,
+            font=ctk.CTkFont(size=18, weight="bold"),
             fg_color="#C0392B",
-            hover_color="#A93226"
-        ).grid(row=0, column=3, padx=(0, 20), sticky="e")
+            hover_color="#A93226",
+            corner_radius=12
+        ).pack(side="right", anchor="center", padx=(10, 0))
+
+        # 2. Przełącznik Motywu (Ikona)
+        self.theme_icon_button = ctk.CTkButton(
+            right,
+            width=44, height=44,
+            fg_color=self.ACCENT_GOLD,
+            hover_color=self.ACCENT_PURPLE,
+            text=self._get_theme_icon(),
+            command=self._toggle_theme,
+            corner_radius=12,
+            font=ctk.CTkFont(size=22),
+        )
+        self.theme_icon_button.pack(side="right", anchor="center")
+
+    def _get_theme_icon(self) -> str:
+        """Zwraca odpowiednią ikonę w zależności od aktualnego motywu."""
+        return "🌙" if ctk.get_appearance_mode() == "Light" else "🌞"
 
     def _create_menu_frame(self):
-        """Tworzy główną ramkę menu, która zawiera pasek nagłówka, podsumowanie i przyciski."""
+        """Tworzy główną ramkę menu."""
 
-        self.menu_frame = ctk.CTkFrame(self.container, fg_color=self.BG_MAIN)
-        self.menu_frame.pack(fill="both", expand=True)  # Pakujemy ramkę menu, która będzie ukrywana
+        self.menu_frame = ctk.CTkFrame(self.container, fg_color=self._get_main_bg_color())
+        self.menu_frame.pack(fill="both", expand=True)
 
-        # 1. Pasek Nagłówka (teraz jest częścią menu_frame)
+        # 1. Pasek Nagłówka (część menu_frame)
         self._create_header_bar(self.menu_frame)
 
         # Ramka na zawartość pod paskiem nagłówka
-        content_frame = ctk.CTkFrame(self.menu_frame, fg_color=self.BG_MAIN)
-        content_frame.pack(fill="both", expand=True, padx=20, pady=20)
+        self.content_frame = ctk.CTkFrame(self.menu_frame, fg_color=self._get_main_bg_color())
+        self.content_frame.pack(fill="both", expand=True, padx=20, pady=20)
 
-        # Podział ekranu: 40% na podsumowanie (r0), 60% na przyciski (r1)
-        content_frame.grid_rowconfigure(0, weight=40, uniform="a")
-        content_frame.grid_rowconfigure(1, weight=60, uniform="a")
-        content_frame.grid_columnconfigure(0, weight=1)
+        # Podział ekranu
+        self.content_frame.grid_rowconfigure(0, weight=40, uniform="a")
+        self.content_frame.grid_rowconfigure(1, weight=60, uniform="a")
+        self.content_frame.grid_columnconfigure(0, weight=1)
 
         # --- Sekcja 1: Podsumowanie Kalendarza (Góra) ---
-        self._create_summary_panel(content_frame)
+        self._create_summary_panel(self.content_frame)
 
         # --- Sekcja 2: Przyciski Modułów (Dół) ---
-        self.buttons_frame = ctk.CTkFrame(content_frame, fg_color="transparent")
+        self.buttons_frame = ctk.CTkFrame(self.content_frame, fg_color="transparent")
         self.buttons_frame.grid(row=1, column=0, sticky="nsew", padx=10, pady=(15, 0))
         self._create_module_buttons()
 
-    def _create_summary_panel(self, master_frame: ctk.CTkFrame):
-        """Tworzy klikalny panel podsumowania z postępem tygodniowym i dziennym."""
+    # ... (metody _create_menu_frame bez zmian) ...
 
-        initial_border_color = self.BG_MAIN
+    def _create_summary_panel(self, master_frame: ctk.CTkFrame):
+        """Tworzy klikalny panel podsumowania z postępem tygodniowym i dziennym. Tło: CYJAN. Tekst: BIAŁY."""
+
+        initial_border_color = self._get_main_bg_color()
 
         self.summary_card = ctk.CTkFrame(
             master_frame,
-            fg_color=self.CARD_BG,
+            fg_color=self.ACCENT_CYAN,  # TŁO ZAWSZE CYJAN
             corner_radius=15,
             cursor="hand2",
             border_width=2,
@@ -195,58 +228,74 @@ class MainScreen:
         self.summary_card.grid_columnconfigure(1, weight=1)
 
         self.summary_card.bind("<Button-1>", lambda e: self._show_module("Kalendarz"))
-        self.summary_card.bind("<Enter>", lambda e: self.summary_card.configure(border_color=self.ACCENT_CYAN))
-        self.summary_card.bind("<Leave>", lambda e: self.summary_card.configure(border_color=self.BG_MAIN))
+        # Obramowanie na hover ZŁOTE
+        self.summary_card.bind("<Enter>", lambda e: self.summary_card.configure(border_color=self.ACCENT_GOLD))
+        self.summary_card.bind("<Leave>", lambda e: self.summary_card.configure(
+            border_color=self._get_main_bg_color()))
 
         # --- Lewa strona: Postęp Tygodniowy ---
-        progress_panel = ctk.CTkFrame(self.summary_card, fg_color="transparent")
+        progress_panel = ctk.CTkFrame(self.summary_card, fg_color=self.ACCENT_CYAN)  # Tło ramki na Cyjan
         progress_panel.grid(row=0, column=0, sticky="nsew", padx=40, pady=30)
         progress_panel.columnconfigure(0, weight=1)
 
+        # Nagłówek dynamiczny (Jasnoszary)
         ctk.CTkLabel(progress_panel, text="🎯 CEL TYGODNIOWY", font=ctk.CTkFont(size=16, weight="bold"),
-                     text_color="#555555").grid(row=0, column=0, sticky="w", pady=(0, 10))
+                     text_color=self._get_secondary_text_color()).grid(row=0, column=0, sticky="w", pady=(0, 10))
 
         percentage = self.stats.get('week_progress', 0)
-        progress_color = self.ACCENT_CYAN if percentage < 100 else self.COLOR_GREEN
+        # Pasek postępu na ZŁOTY/ZIELONY
+        progress_color = self.ACCENT_GOLD if percentage < 100 else self.COLOR_GREEN
 
+        # Pasek postępu - użycie jaśniejszego tła dla niezrobionej części
         self.progress_bar_main = ctk.CTkProgressBar(progress_panel, height=30, progress_color=progress_color,
+                                                    fg_color=self.COLOR_PROGRESS_TRACK,  # Jasna ścieżka
                                                     corner_radius=15)
         self.progress_bar_main.grid(row=1, column=0, sticky="ew", pady=(0, 15))
         self.progress_bar_main.set(percentage / 100)
 
         progress_text = f"{self.stats.get('week_total_min', 0)} / {self.stats.get('week_goal_min', 180)} min osiągnięte ({percentage}%)"
-        ctk.CTkLabel(progress_panel, text=progress_text, font=ctk.CTkFont(size=18, weight="bold"),
-                     text_color="#333333").grid(row=2, column=0, sticky="nw", pady=(0, 10))
 
+        # Tekst dynamiczny (Biały)
+        ctk.CTkLabel(progress_panel, text=progress_text, font=ctk.CTkFont(size=18, weight="bold"),
+                     text_color=self._get_text_color()).grid(row=2, column=0, sticky="nw", pady=(0, 10))
+
+        # Tekst akcentujący na ZŁOTY
         ctk.CTkLabel(progress_panel, text="KLIKNIJ, ABY OTWORZYĆ KALENDARZ", font=ctk.CTkFont(size=12),
                      text_color=self.ACCENT_GOLD).grid(row=3, column=0, sticky="sw", pady=(10, 0))
 
         # --- Prawa strona: Wynik Dzienny ---
-        daily_panel = ctk.CTkFrame(self.summary_card, fg_color="transparent")
+        daily_panel = ctk.CTkFrame(self.summary_card, fg_color=self.ACCENT_CYAN)  # Tło ramki na Cyjan
         daily_panel.grid(row=0, column=1, sticky="nsew", padx=40, pady=30)
         daily_panel.columnconfigure(0, weight=1)
 
+        # Nagłówek dynamiczny (Jasnoszary)
         ctk.CTkLabel(daily_panel, text="📅 DZISIEJSZY WYNIK", font=ctk.CTkFont(size=16, weight="bold"),
-                     text_color="#555555").grid(row=0, column=0, sticky="w", pady=(0, 10))
+                     text_color=self._get_secondary_text_color()).grid(row=0, column=0, sticky="w", pady=(0, 10))
 
         daily_min = self.stats.get('daily_min', 0)
         daily_goal = self.stats.get('daily_goal', 30)
-        color_daily = self.COLOR_GREEN if daily_min >= daily_goal else self.COLOR_RED
+
+        # ZMIENIONE NA FIOLETOWY:
+        color_daily = self.ACCENT_PURPLE
 
         ctk.CTkLabel(daily_panel, text=f"{daily_min}", font=ctk.CTkFont(size=60, weight="bold"),
                      text_color=color_daily).grid(row=1, column=0, sticky="w")
+        # Tekst dynamiczny (Biały)
         ctk.CTkLabel(daily_panel, text=f"Minut ćwiczeń / Cel: {daily_goal} min", font=ctk.CTkFont(size=18),
-                     text_color="#333333").grid(row=2, column=0, sticky="nw")
+                     text_color=self._get_text_color()).grid(row=2, column=0, sticky="nw")
         daily_panel.grid_rowconfigure(3, weight=1)
 
     def _create_module_buttons(self):
-        """Tworzy pięć kwadratowych przycisków dla głównych modułów."""
+        """Tworzy pięć kwadratowych przycisków dla głównych modułów w JEDNYM RZĘDZIE."""
 
-        self.buttons_frame.columnconfigure((0, 1, 2), weight=1, uniform="b")
-        self.buttons_frame.rowconfigure((0, 1), weight=1, uniform="c")
+        # Zapewnienie, że wszystkie 5 kolumn mają równą wagę
+        num_buttons = len(self.BUTTON_ORDER)
+        for i in range(num_buttons):
+            self.buttons_frame.columnconfigure(i, weight=1, uniform="b")
+        self.buttons_frame.rowconfigure(0, weight=1)
 
-        # Pozycje dla 5 przycisków w siatce 2x3 (środkowy pusty)
-        positions = [(0, 0), (0, 1), (0, 2), (1, 0), (1, 2)]
+        # Rozmieszczenie w jednym rzędzie (r=0, c=i)
+        positions = [(0, i) for i in range(num_buttons)]
 
         for i, key in enumerate(self.BUTTON_ORDER):
             if i < len(positions):
@@ -255,14 +304,18 @@ class MainScreen:
 
                 if not module_data: continue
 
+                # Dodanie emotikony do nazwy przycisku
+                button_text = f"{module_data.get('Emoji', '')} {key if key != 'Tetekror' else 'Wyszukiwarka akordów'}"
+
                 btn_container = ctk.CTkFrame(self.buttons_frame, fg_color="transparent")
-                btn_container.grid(row=r, column=c, sticky="nsew", padx=10, pady=10)
+                # Ustawienie tylko w rzędzie 0
+                btn_container.grid(row=0, column=c, sticky="nsew", padx=10, pady=10)
                 btn_container.columnconfigure(0, weight=1)
                 btn_container.rowconfigure(0, weight=1)
 
                 button = ctk.CTkButton(
                     btn_container,
-                    text=key if key != "Tetekror" else "Wyszukiwarka akordów",
+                    text=button_text,  # Użycie tekstu z emotikoną
                     command=lambda k=key: self._show_module(k),
                     fg_color=module_data["Color"],
                     hover_color=self._get_darker_color(module_data["Color"]),
@@ -274,8 +327,7 @@ class MainScreen:
                 )
                 button.grid(row=0, column=0, sticky="nsew")
 
-    # --- Logika Nawigacji ---
-
+    # ... (logika nawigacji i motywu bez zmian) ...
     def _hide_current_view(self):
         """Ukrywa aktualnie wyświetlany widok i niszczy jego ramkę."""
         if self.current_view_frame:
@@ -288,7 +340,7 @@ class MainScreen:
 
     def _create_module_frame(self, ViewClass: Type, **kwargs) -> Tuple[ctk.CTkFrame, object]:
         """Tworzy ramkę dla nowego widoku i jego instancję z odpowiednimi callbackami."""
-        frame = ctk.CTkFrame(self.container, fg_color=self.BG_MAIN)
+        frame = ctk.CTkFrame(self.container, fg_color=self._get_main_bg_color())
 
         callbacks = {
             "back_to_menu_callback": self.show_menu,
@@ -303,12 +355,10 @@ class MainScreen:
         # --- FILTROWANIE ARGUMENTÓW ---
 
         if ViewClass == DayView:
-            # DayView potrzebuje: selected_date, back_to_menu_callback, back_to_calendar_callback
             view_args.pop("back_callback", None)
             view_args.pop("show_day_callback", None)
 
         elif ViewClass == CalendarView:
-            # CalendarView potrzebuje: show_day_callback i back_callback
             view_args = {
                 "show_day_callback": self._show_day_from_calendar,
                 "back_callback": self.show_menu,
@@ -318,7 +368,6 @@ class MainScreen:
             view_args.pop("back_to_calendar_callback", None)
 
         else:
-            # Proste Widoki potrzebują tylko 'back_callback'
             view_args = {
                 "back_callback": self.show_menu,
                 **kwargs
@@ -337,7 +386,6 @@ class MainScreen:
         if not module_info:
             return
 
-        # Ukryj ramkę menu
         self.menu_frame.pack_forget()
         self._hide_current_view()
 
@@ -346,27 +394,49 @@ class MainScreen:
         self.current_view_frame.pack(fill="both", expand=True)
 
     def _show_day_from_calendar(self, selected_date: datetime):
-        """Obsługuje przekazywanie daty z kalendarza do widoku dziennego."""
         self._show_module("Sesja Dziennna", selected_date=selected_date)
 
-    # --- Metody Publiczne dla Callbacków ---
-
     def show_menu(self):
-        """Wracanie do menu głównego."""
-        # Odśwież statystyki i panel
-        self._get_day_view_stats()
-        self._create_summary_panel(self.menu_frame.winfo_children()[1])  # Odśwież pod-ramkę w menu
+        """Wracanie do menu głównego i odświeżanie kolorów po zmianie motywu."""
 
+        # 1. Zaktualizuj tła kontenerów
+        main_bg = self._get_main_bg_color()
+        self.container.configure(fg_color=main_bg)
+
+        if self.menu_frame:
+            self.menu_frame.configure(fg_color=main_bg)
+
+        if self.content_frame:
+            self.content_frame.configure(fg_color=main_bg)
+
+        if hasattr(self, 'theme_icon_button'):
+            self.theme_icon_button.configure(text=self._get_theme_icon())
+
+            # 2. Odśwież statystyki i usuń starą zawartość
+        self._get_day_view_stats()
+
+        if self.content_frame:
+            # Usuń starą zawartość przed ponownym rysowaniem
+            for widget in self.content_frame.winfo_children():
+                widget.destroy()
+
+            # 3. PONOWNE RYSOWANIE ZAWARTOŚCI MENU
+            self._create_summary_panel(self.content_frame)
+            self.buttons_frame = ctk.CTkFrame(self.content_frame, fg_color="transparent")
+            self.buttons_frame.grid(row=1, column=0, sticky="nsew", padx=10, pady=(15, 0))
+            self._create_module_buttons()
+
+        # 4. Pokaż menu
         self._hide_current_view()
-        self.menu_frame.pack(fill="both", expand=True)  # Pokaż ramkę menu z paskiem nagłówka
+        self.menu_frame.pack(fill="both", expand=True)
 
     def _toggle_theme(self):
-        """Przełącza motyw między jasnym a ciemnym."""
-        if ctk.get_appearance_mode() == "Dark":
-            ctk.set_appearance_mode("Light")
-            self.current_theme = "Light"
-        else:
+        """Przełącza motyw i wymusza odświeżenie UI."""
+        if ctk.get_appearance_mode() == "Light":
             ctk.set_appearance_mode("Dark")
             self.current_theme = "Dark"
+        else:
+            ctk.set_appearance_mode("Light")
+            self.current_theme = "Light"
 
         self.show_menu()

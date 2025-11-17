@@ -94,6 +94,9 @@ class ChordFinderView(ctk.CTkFrame):
     ACCENT_GREEN = "#61be5f"
     ACCENT_LAVENDER = "#9b75a7"
 
+    # Nowa stała dla koloru tekstu nut na gryfie gitary (ciemny)
+    GUITAR_FRET_TEXT_COLOR = "#333333"
+
     def __init__(self, master, back_callback: Optional[Callable] = None):
         super().__init__(master)
         self.configure(fg_color=self._get_main_bg_color())
@@ -385,7 +388,9 @@ class ChordFinderView(ctk.CTkFrame):
                                     fg_color=fret_btn_fg, hover_color=fret_btn_hover,
                                     font=("Arial", 10, "bold"),
                                     command=lambda mm=midi, ss=s, ff=f: self._toggle_pitch_from_guitar(mm, ss, ff),
-                                    corner_radius=8
+                                    corner_radius=8,
+                                    # Zmiana: Stały ciemny kolor tekstu
+                                    text_color=self.GUITAR_FRET_TEXT_COLOR
                                     )
                 btn.pack(side="left", padx=1, pady=(2, 0))
                 self._register_visual(m=midi, kind="guitar_btn", ref=(s, f, btn))
