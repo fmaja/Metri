@@ -3,6 +3,8 @@ import threading
 import time
 import os
 import pygame
+from PIL import Image  # <-- DODANE
+from typing import Optional, Callable  # <-- DODANE
 
 
 # --- LOGIC ---
@@ -57,23 +59,37 @@ class MetronomeLogic(threading.Thread):
 
 # --- UI ---
 class MetronomeView(ctk.CTkFrame):
+    # Kolory Metronomu
     MAIN_COLOR = "#3db0ad"
     HOVER_COLOR = "#27AE60"
     ACCENT_COLOR = "#deb536"
     STRONG_BEAT_COLOR = "#E67E22"
     STOP_COLOR = "#E74C3C"
     STOP_HOVER_COLOR = "#C0392B"
-    DISABLED_COLOR = "#34495E"
-    BACKGROUND_COLOR = "transparent"
     GREEN = "#61be5f"
-
-    BEAT_BUTTON_NORMAL = "#5D6D7E"
     BEAT_BUTTON_ACTIVE = "#3498DB"
+
+    # Kolory tła wskaźników
+    DISABLED_COLOR_DARK = "#34495E"
+    DISABLED_COLOR_LIGHT = "#BDC3C7"
+
+    # Kolory przycisków metrum
+    BEAT_BUTTON_NORMAL_DARK = "#5D6D7E"
+    BEAT_BUTTON_NORMAL_LIGHT = "#D0D3D4"
+
+    # --- DODANE STAŁE Z INNYCH MODUŁÓW ---
+    HEADER_BG = "#FFFFFF"
+    ACCENT_CYAN = "#25b4b6"
+    ACCENT_GOLD = "#cca839"
+    ACCENT_PURPLE = "#552564"
+    ACCENT_LAVENDER = "#9b75a7"
+    # --- KONIEC DODANYCH STAŁYCH ---
 
     MAX_BEATS = 12
 
-    def __init__(self, master, **kwargs):
+    def __init__(self, master, back_callback: Optional[Callable] = None, **kwargs):  # <-- DODANE back_callback
         super().__init__(master, **kwargs)
+        self.back_callback = back_callback  # <-- DODANE
 
         # State variables
         self.bpm_var = ctk.IntVar(value=78)
@@ -90,8 +106,10 @@ class MetronomeView(ctk.CTkFrame):
 
         # Audio setup
         pygame.mixer.init()
-        current_dir = os.path.dirname(__file__)
+        # Poprawiona ścieżka do assets (zakładając, że assets jest w katalogu nadrzędnym)
+        current_dir = os.path.dirname(os.path.abspath(__file__))
         assets_dir = os.path.abspath(os.path.join(current_dir, '..', 'assets', 'sounds'))
+
         self.click_path = os.path.join(assets_dir, 'click.wav')
         self.strong_click_path = os.path.join(assets_dir, 'strong_click.wav')
 
@@ -99,20 +117,24 @@ class MetronomeView(ctk.CTkFrame):
             self.click_obj = pygame.mixer.Sound(self.click_path)
             self.strong_click_obj = pygame.mixer.Sound(self.strong_click_path)
         except Exception as e:
-            print(f"Audio loading error: {e}")
+            print(f"Błąd ładowania audio metronomu: {e}")
             self.click_obj = None
             self.strong_click_obj = None
 
+        # Konfiguracja UI
+        self.configure(fg_color=self._get_main_bg_color())  # <-- DODANE tło
         self.columnconfigure(0, weight=1)
         self.rowconfigure(1, weight=1)
 
-        # Header
-        header_label = ctk.CTkLabel(
-            self, text="Metronom", font=("Arial", 36, "bold"), text_color="#1ABC9C"
-        )
-        header_label.grid(row=0, column=0, pady=(20, 10), sticky="n")
+        # --- NOWY NAGŁÓWEK ---
+        self._build_header()
+        # --- KONIEC NOWEGO NAGŁÓWKA ---
 
-        main_content = ctk.CTkFrame(self, fg_color=self.BACKGROUND_COLOR)
+        # Stary nagłówek (usunięty)
+        # header_label = ctk.CTkLabel(...)
+        # header_label.grid(...)
+
+        main_content = ctk.CTkFrame(self, fg_color="transparent")  # <-- ZMIANA TŁA
         main_content.grid(row=1, column=0, sticky="nsew", padx=20, pady=20)
         main_content.columnconfigure(0, weight=1)
 
@@ -131,7 +153,7 @@ class MetronomeView(ctk.CTkFrame):
         bpm_text_label.pack(pady=(0, 20))
 
         # BPM controls
-        bpm_control_frame = ctk.CTkFrame(main_content, fg_color=self.BACKGROUND_COLOR)
+        bpm_control_frame = ctk.CTkFrame(main_content, fg_color="transparent")  # <-- ZMIANA TŁA
         bpm_control_frame.grid(row=1, column=0, pady=10, sticky="ew", padx=20)
         bpm_control_frame.columnconfigure(1, weight=1)
 
@@ -145,8 +167,7 @@ class MetronomeView(ctk.CTkFrame):
         self.bpm_slider = ctk.CTkSlider(
             bpm_control_frame, from_=40, to=240, variable=self.bpm_var,
             command=self._update_bpm_label, height=30,
-            fg_color="#AEB6BF", progress_color=self.MAIN_COLOR,
-            button_color=self.ACCENT_COLOR, button_hover_color="#cca839"
+            **self._get_slider_colors()  # <-- ZMIANA: Dynamiczne kolory
         )
         self.bpm_slider.grid(row=0, column=1, sticky="ew")
         self.bpm_slider.set(self.bpm_var.get())
@@ -170,20 +191,22 @@ class MetronomeView(ctk.CTkFrame):
         self.tap_tempo_button = ctk.CTkButton(
             main_content, text="Wystukaj rytm", command=self._on_tap_tempo,
             height=40, width=150, font=("Arial", 16),
-            fg_color="#6e3480", hover_color="#552564"
+            fg_color="#6e3480", hover_color=self.ACCENT_PURPLE  # Użycie stałej
         )
         self.tap_tempo_button.grid(row=3, column=0, pady=(10, 0))
 
         # Beat selector buttons
-        rhythm_control_frame = ctk.CTkFrame(main_content, fg_color=self.BACKGROUND_COLOR)
+        rhythm_control_frame = ctk.CTkFrame(main_content, fg_color="transparent")  # <-- ZMIANA TŁA
         rhythm_control_frame.grid(row=4, column=0, pady=(20, 0), sticky="ew")
         rhythm_control_frame.columnconfigure(0, weight=1)
 
-        ctk.CTkLabel(
-            rhythm_control_frame, text="Metrum:", font=("Arial", 16, "bold")
-        ).grid(row=0, column=0, pady=(0, 10))
+        self.rhythm_label = ctk.CTkLabel(  # <-- Zapisanie referencji
+            rhythm_control_frame, text="Metrum:", font=("Arial", 16, "bold"),
+            text_color=self._get_secondary_text_color()  # <-- Dynamiczny kolor
+        )
+        self.rhythm_label.grid(row=0, column=0, pady=(0, 10))
 
-        beat_buttons_container = ctk.CTkFrame(rhythm_control_frame, fg_color=self.BACKGROUND_COLOR)
+        beat_buttons_container = ctk.CTkFrame(rhythm_control_frame, fg_color="transparent")  # <-- ZMIANA TŁA
         beat_buttons_container.grid(row=1, column=0, pady=(0, 10))
 
         for i in range(1, self.MAX_BEATS + 1):
@@ -193,7 +216,8 @@ class MetronomeView(ctk.CTkFrame):
                 command=lambda val=beat_value: self._set_time_signature(val),
                 width=35, height=35, corner_radius=20,
                 font=("Arial", 16, "bold"),
-                fg_color=self.BEAT_BUTTON_NORMAL, hover_color=self.ACCENT_COLOR,
+                fg_color=self.BEAT_BUTTON_NORMAL_DARK,  # Ustawienie domyślne
+                hover_color=self.ACCENT_COLOR,
             )
             button.grid(row=0, column=i - 1, padx=4)
             self.beat_buttons.append(button)
@@ -201,9 +225,130 @@ class MetronomeView(ctk.CTkFrame):
         self._update_beat_buttons_color()
 
         # Beat indicators
-        self.indicator_frame = ctk.CTkFrame(main_content, fg_color=self.BACKGROUND_COLOR)
+        self.indicator_frame = ctk.CTkFrame(main_content, fg_color="transparent")  # <-- ZMIANA TŁA
         self.indicator_frame.grid(row=5, column=0, pady=(20, 20))
         self.create_beat_indicators()
+
+        # Ustawienie ikony motywu przy starcie
+        if ctk.get_appearance_mode() == "Dark":
+            self.theme_icon.configure(text="🌙")
+        else:
+            self.theme_icon.configure(text="🌞")
+
+    # ==========================================================
+    # START: DODANE METODY (z QuizView/ChordFinderView)
+    # ==========================================================
+
+    def _get_main_bg_color(self):
+        """Zwraca kolor tła głównego okna."""
+        return "#f2f2f2" if ctk.get_appearance_mode() == "Light" else "#1a1a1a"
+
+    def _get_secondary_text_color(self):
+        """Zwraca kolor drugorzędnego tekstu."""
+        return "#4b4b4b" if ctk.get_appearance_mode() == "Light" else "#95a5a6"
+
+    def _get_disabled_color(self):
+        """Zwraca kolor nieaktywnego wskaźnika."""
+        return self.DISABLED_COLOR_LIGHT if ctk.get_appearance_mode() == "Light" else self.DISABLED_COLOR_DARK
+
+    def _get_slider_colors(self):
+        """Zwraca kolory dla suwaka BPM."""
+        if ctk.get_appearance_mode() == "Light":
+            return {
+                "fg_color": "#AEB6BF",
+                "progress_color": self.MAIN_COLOR,
+                "button_color": self.ACCENT_COLOR,
+                "button_hover_color": "#cca839"
+            }
+        else:  # Dark
+            return {
+                "fg_color": "#333",
+                "progress_color": self.MAIN_COLOR,
+                "button_color": self.ACCENT_COLOR,
+                "button_hover_color": "#cca839"
+            }
+
+    def _get_beat_button_colors(self):
+        """Zwraca kolory dla przycisków metrum."""
+        if ctk.get_appearance_mode() == "Light":
+            return {"normal": self.BEAT_BUTTON_NORMAL_LIGHT, "active": self.BEAT_BUTTON_ACTIVE,
+                    "hover": self.ACCENT_COLOR}
+        else:  # Dark
+            return {"normal": self.BEAT_BUTTON_NORMAL_DARK, "active": self.BEAT_BUTTON_ACTIVE,
+                    "hover": self.ACCENT_COLOR}
+
+    def _go_back(self):
+        """Callback dla przycisku powrotu."""
+        self.stop_metronome_thread()  # Zatrzymaj metronom przed powrotem
+        if self.back_callback:
+            self.back_callback()
+
+    def _build_header(self):
+        """Tworzy nowy, biały nagłówek."""
+        self.header = ctk.CTkFrame(self, fg_color=self.HEADER_BG, height=72, corner_radius=12)
+        self.header.grid(row=0, column=0, sticky="ew", padx=10, pady=(20, 10))
+        self.header.grid_propagate(False)
+        self.header.columnconfigure(1, weight=1)
+        self.header.rowconfigure(0, weight=1)
+
+        # Lewa strona: Ikona + strzałka powrotu
+        left = ctk.CTkFrame(self.header, fg_color="transparent")
+        left.grid(row=0, column=0, sticky="w", padx=(18, 10))
+
+        # Poprawiona ścieżka do ikony
+        icon_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "assets", "icon.png")
+        if os.path.exists(icon_path):
+            app_icon = ctk.CTkImage(light_image=Image.open(icon_path), size=(60, 65))
+            ctk.CTkLabel(left, image=app_icon, text="").pack(side="left", anchor="center")
+
+        if self.back_callback:
+            ctk.CTkButton(
+                left, text="←", width=44, height=44,
+                fg_color=self.ACCENT_LAVENDER, hover_color=self.ACCENT_PURPLE,
+                command=self._go_back,
+                corner_radius=12
+            ).pack(side="left", anchor="center", padx=(10, 0))
+
+        # Środek: Tytuł
+        title = ctk.CTkLabel(
+            self.header, text="Metronom",  # ZMIENIONY TYTUŁ
+            font=ctk.CTkFont(size=40, weight="bold"), text_color=self.ACCENT_CYAN
+        )
+        title.grid(row=0, column=1)
+
+        # Prawa strona: Przełącznik motywu
+        right = ctk.CTkFrame(self.header, fg_color="transparent")
+        right.grid(row=0, column=2, sticky="e", padx=(10, 18))
+        self.theme_icon = ctk.CTkButton(
+            right, width=44, height=44,
+            fg_color=self.ACCENT_GOLD,
+            hover_color=self.ACCENT_CYAN,
+            text="🌞",
+            command=self._toggle_theme,
+            corner_radius=12,
+            font=ctk.CTkFont(size=22)
+        )
+        self.theme_icon.pack(side="right", anchor="center")
+
+    def _toggle_theme(self):
+        """Przełącza motyw Light/Dark i aktualizuje UI."""
+        if ctk.get_appearance_mode() == "Light":
+            ctk.set_appearance_mode("Dark")
+            self.theme_icon.configure(text="🌙")
+        else:
+            ctk.set_appearance_mode("Light")
+            self.theme_icon.configure(text="🌞")
+
+        # Aktualizuj wszystkie relevantne widżety
+        self.configure(fg_color=self._get_main_bg_color())
+        self.rhythm_label.configure(text_color=self._get_secondary_text_color())
+        self.bpm_slider.configure(**self._get_slider_colors())
+        self._update_beat_buttons_color()
+        self.create_beat_indicators()  # Przebuduj wskaźniki z nowym kolorem tła
+
+    # ==========================================================
+    # KONIEC: DODANE METODY
+    # ==========================================================
 
     def _update_bpm_label(self, value):
         """Update BPM label."""
@@ -219,10 +364,11 @@ class MetronomeView(ctk.CTkFrame):
 
     def _update_beat_buttons_color(self):
         """Highlight selected beat button."""
+        colors = self._get_beat_button_colors()  # <-- ZMIANA: Pobierz kolory motywu
         current_beat_str = self.time_signature_var.get().split('/')[0]
         for i, button in enumerate(self.beat_buttons):
-            color = self.BEAT_BUTTON_ACTIVE if str(i + 1) == current_beat_str else self.BEAT_BUTTON_NORMAL
-            button.configure(fg_color=color)
+            color = colors["active"] if str(i + 1) == current_beat_str else colors["normal"]
+            button.configure(fg_color=color, hover_color=colors["hover"])
 
     def create_beat_indicators(self):
         """Create beat indicator dots."""
@@ -238,7 +384,7 @@ class MetronomeView(ctk.CTkFrame):
         for i in range(beats_to_show):
             indicator = ctk.CTkLabel(
                 self.indicator_frame, text="", width=20, height=20,
-                corner_radius=10, fg_color=self.DISABLED_COLOR
+                corner_radius=10, fg_color=self._get_disabled_color()  # <-- ZMIANA: Dynamiczny kolor
             )
             indicator.grid(row=0, column=i, padx=5)
             self.beat_indicators.append(indicator)
@@ -302,17 +448,20 @@ class MetronomeView(ctk.CTkFrame):
             self.metronome_thread.stop()
             self.metronome_thread.join(timeout=0.2)
             self.metronome_thread = None
-        if self.start_stop_button:
+
+        # Sprawdź, czy przycisk istnieje (na wypadek zamknięcia okna)
+        if hasattr(self, 'start_stop_button') and self.start_stop_button.winfo_exists():
             self.start_stop_button.configure(
-                text="START", fg_color=self.MAIN_COLOR, hover_color=self.HOVER_COLOR
+                text="START", fg_color=self.GREEN, hover_color=self.HOVER_COLOR  # Zmieniono na GREEN
             )
 
     def _reset_indicators(self):
         """Reset beat indicator colors."""
         if not self.winfo_exists():
             return
+        disabled_color = self._get_disabled_color()  # <-- ZMIANA
         for indicator in self.beat_indicators:
-            indicator.configure(fg_color=self.DISABLED_COLOR)
+            indicator.configure(fg_color=disabled_color)
 
     def update_beat_indicator(self, beat_number):
         """Thread callback for updating beat UI."""
@@ -340,7 +489,8 @@ class MetronomeView(ctk.CTkFrame):
             indicator.configure(fg_color=color)
 
             def fade_out():
+                disabled_color = self._get_disabled_color()  # <-- ZMIANA
                 if self.winfo_exists() and indicator.winfo_exists() and indicator.cget("fg_color") == color:
-                    indicator.configure(fg_color=self.DISABLED_COLOR)
+                    indicator.configure(fg_color=disabled_color)
 
             self.after(100, fade_out)

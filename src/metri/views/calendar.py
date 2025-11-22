@@ -1,4 +1,3 @@
-
 import customtkinter as ctk
 import json
 import os
@@ -7,188 +6,117 @@ from datetime import datetime, timedelta
 import calendar
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
+from PIL import Image  # <-- DODANE
+from typing import Optional, Callable  # <-- DODANE
 
 
 class CalendarView(ctk.CTkFrame):
-    # Visual settings
-    PRACTICE_GOAL = 30  # minutes per day
-    WEEKLY_GOAL = 180  # 3 hours per week in minutes
+    # Cele
+    PRACTICE_GOAL = 30  # min/dzień
+    WEEKLY_GOAL = 180  # min/tydzień
 
-    COLOR_GOAL_NOT_MET = "#34495E"
+    # Kolory główne (DOPASOWANE DO JASNEGO MOTYWU)
+    COLOR_GOAL_NOT_MET = "#E5E7E9"  # Light gray
     COLOR_GOAL_MET = "#27AE60"
     COLOR_TODAY = "#3498DB"
-    COLOR_HEADER = "#1ABC9C"
-    COLOR_ACCENT = "#E67E22"
-    COLOR_FOCUS = "#F39C12"
+    COLOR_ACCENT = "#F39C12"
+    COLOR_FOCUS = "#E67E22"
 
-    def __init__(self, master, show_day_callback=None, back_callback=None, **kwargs):
+    # Kolory Nagłówka (BIAŁY PASEK)
+    HEADER_BG = "#FFFFFF"
+    ACCENT_CYAN = "#25b4b6"
+    ACCENT_GOLD = "#cca839"
+    ACCENT_PURPLE = "#552564"
+    ACCENT_LAVENDER = "#9b75a7"
+
+    # Rozmiar komórek dni
+    DAY_CELL_SIZE = 40
+    DAY_CELL_RADIUS = 20
+
+    def __init__(self, master, show_day_callback: Optional[Callable] = None, back_callback: Optional[Callable] = None,
+                 **kwargs):  # <-- ZMIENIONA SYGNATURA
         super().__init__(master, **kwargs)
 
-        # Initialize data
+        # Dane
         self.practice_data = self._load_practice_data()
-        self.quiz_data = self._load_quiz_data()  # NEW: load quiz results
         self.current_date = datetime.now()
         self.current_year = self.current_date.year
         self.current_month = self.current_date.month
 
-        # Cache for week totals to avoid recalculation
+        # Cache
         self.week_totals_cache = {}
 
-        # Track focused day - set to today by default
+        # Fokus
         self.focused_day = self.current_date
         self.focused_day_frame = None
 
-        # Callbacks
+        # Callbacki
         self.show_day_callback = show_day_callback
         self.back_callback = back_callback
 
+        # Budowa UI
+        self.configure(fg_color=self._get_main_bg_color())  # <-- Ustawienie tła na dynamiczne
         self._create_widgets()
 
-    # ----------------- DATA FILES -----------------
-    def _get_data_dir(self):
-        """Return data directory (same as practice file location)."""
-        if getattr(sys, "frozen", False):
-            appdata = os.getenv("APPDATA")
-            data_dir = os.path.join(appdata, "Metri")
+        # Render
+        self._render_calendar()
+        self._render_chart()
+
+        # Autowybór dzisiaj
+        self.after(120, self._select_today)
+
+        # Ustawienie ikony motywu przy starcie
+        if ctk.get_appearance_mode() == "Dark":
+            self.theme_icon.configure(text="🌙")
+        else:
+            self.theme_icon.configure(text="🌞")
+
+    # =========================
+    # Dane: load / save / utils
+    # =========================
+    def _get_data_file_path(self):
+        if getattr(sys, 'frozen', False):
+            appdata = os.getenv('APPDATA')
+            data_dir = os.path.join(appdata, 'Metri')
         else:
             current_file = os.path.abspath(__file__)
             base_dir = os.path.dirname(os.path.dirname(current_file))
-            data_dir = os.path.join(base_dir, "data")
+            data_dir = os.path.join(base_dir, 'data')
+
         os.makedirs(data_dir, exist_ok=True)
-        return data_dir
-
-    def _get_practice_file_path(self):
-        return os.path.join(self._get_data_dir(), "practice_data.json")
-
-    def _get_quiz_file_path(self):
-        return os.path.join(self._get_data_dir(), "quiz_results.json")
+        return os.path.join(data_dir, 'practice_data.json')
 
     def _load_practice_data(self):
-        """Load practice data from JSON file."""
         try:
-            data_file = self._get_practice_file_path()
-            print(f"Looking for practice data file at: {data_file}")
+            data_file = self._get_data_file_path()
             if os.path.exists(data_file):
-                with open(data_file, "r", encoding="utf-8") as f:
-                    data = json.load(f)
-                    print(f"Loaded {len(data)} practice records")
-                    return data
-            else:
-                print(f"Practice data file not found at {data_file}")
-                return {}
-        except Exception as e:
-            print(f"Error loading practice data: {e}")
-            import traceback
-            traceback.print_exc()
+                with open(data_file, 'r', encoding='utf-8') as f:
+                    return json.load(f)
+            return {}
+        except Exception:
             return {}
 
-    def _load_quiz_data(self):
-        """Load quiz results from JSON file (graceful on missing/corrupt)."""
-        try:
-            data_file = self._get_quiz_file_path()
-            print(f"Looking for quiz results at: {data_file}")
-            if os.path.exists(data_file):
-                with open(data_file, "r", encoding="utf-8") as f:
-                    data = json.load(f)
-                    # ensure keys exist
-                    for k in ("interval", "harmony", "rhythm"):
-                        if k not in data:
-                            data[k] = []
-                    print(f"Loaded quiz results: interval={len(data.get('interval',[]))}, harmony={len(data.get('harmony',[]))}, rhythm={len(data.get('rhythm',[]))}")
-                    return data
-            else:
-                print(f"Quiz results file not found at {data_file}")
-                return {"interval": [], "harmony": [], "rhythm": []}
-        except Exception as e:
-            print(f"Error loading quiz data: {e}")
-            import traceback
-            traceback.print_exc()
-            return {"interval": [], "harmony": [], "rhythm": []}
-
     def _save_practice_data(self):
-        """Save practice data to JSON file."""
         try:
-            data_file = self._get_practice_file_path()
-            with open(data_file, "w", encoding="utf-8") as f:
+            data_file = self._get_data_file_path()
+            with open(data_file, 'w', encoding='utf-8') as f:
                 json.dump(self.practice_data, f, indent=2)
-        except Exception as e:
-            print(f"Error saving practice data: {e}")
+        except Exception:
+            pass
 
-    # ----------------- HELPERS -----------------
     def _get_practice_minutes(self, date_obj):
-        date_str = date_obj.strftime("%Y-%m-%d")
-        return self.practice_data.get(date_str, 0)
-
-    def _get_quiz_metrics_for_day(self, date_obj):
-        """
-        Aggregate quiz results for a given date (YYYY-MM-DD).
-        Returns dict with keys:
-            interval_correct, interval_wrong,
-            harmony_correct, harmony_wrong,
-            rhythm_perfect, rhythm_good, rhythm_mistake, rhythm_avg_errors (list)
-        """
-        date_key = date_obj.strftime("%Y-%m-%d")
-        out = {
-            "interval_correct": 0, "interval_wrong": 0,
-            "harmony_correct": 0, "harmony_wrong": 0,
-            "rhythm_perfect": 0, "rhythm_good": 0, "rhythm_mistake": 0,
-            "rhythm_avg_errors": []
-        }
-
-        # INTERVAL
-        for entry in self.quiz_data.get("interval", []):
-            try:
-                d = datetime.fromisoformat(entry.get("date")).strftime("%Y-%m-%d")
-            except Exception:
-                continue
-            if d == date_key:
-                out["interval_correct"] += int(entry.get("correct", 0))
-                out["interval_wrong"] += int(entry.get("wrong", 0))
-
-        # HARMONY
-        for entry in self.quiz_data.get("harmony", []):
-            try:
-                d = datetime.fromisoformat(entry.get("date")).strftime("%Y-%m-%d")
-            except Exception:
-                continue
-            if d == date_key:
-                out["harmony_correct"] += int(entry.get("correct", 0))
-                out["harmony_wrong"] += int(entry.get("wrong", 0))
-
-        # RHYTHM
-        for entry in self.quiz_data.get("rhythm", []):
-            try:
-                d = datetime.fromisoformat(entry.get("date")).strftime("%Y-%m-%d")
-            except Exception:
-                continue
-            if d == date_key:
-                cats = entry.get("categories", {})
-                out["rhythm_perfect"] += int(cats.get("perfect", 0))
-                out["rhythm_good"] += int(cats.get("good", 0))
-                out["rhythm_mistake"] += int(cats.get("mistake", 0))
-                if "avg_error" in entry:
-                    try:
-                        out["rhythm_avg_errors"].append(float(entry.get("avg_error", 0)))
-                    except Exception:
-                        pass
-
-        return out
+        return self.practice_data.get(date_obj.strftime("%Y-%m-%d"), 0)
 
     def _get_week_total(self, date_obj):
-        # Find Monday of the week
-        days_since_monday = date_obj.weekday()
-        monday = date_obj - timedelta(days=days_since_monday)
+        monday = date_obj - timedelta(days=date_obj.weekday())
         week_key = monday.strftime("%Y-%m-%d")
-
-        # Use cache if available
         if week_key in self.week_totals_cache:
             return self.week_totals_cache[week_key]
-
         total = 0
         for i in range(7):
-            day = monday + timedelta(days=i)
-            total += self._get_practice_minutes(day)
-
+            d = monday + timedelta(days=i)
+            total += self._get_practice_minutes(d)
+        total = max(0, total)
         self.week_totals_cache[week_key] = total
         return total
 
@@ -209,8 +137,7 @@ class CalendarView(ctk.CTkFrame):
     def _calculate_weekly_streak(self):
         streak = 0
         current = self.current_date
-        days_since_monday = current.weekday()
-        monday = current - timedelta(days=days_since_monday)
+        monday = current - timedelta(days=current.weekday())
         while True:
             week_total = self._get_week_total(monday)
             if week_total >= self.WEEKLY_GOAL:
@@ -223,525 +150,651 @@ class CalendarView(ctk.CTkFrame):
         return streak
 
     def _get_current_week_progress(self):
+        # Gdy brak ćwiczeń w tygodniu => 0/0% bez „magicznych” wartości
         week_total = self._get_week_total(self.current_date)
-        percentage = int((week_total / self.WEEKLY_GOAL) * 100) if self.WEEKLY_GOAL else 0
-        return min(percentage, 100), week_total
+        if week_total <= 0:
+            return 0, 0
+        percentage = int((week_total / self.WEEKLY_GOAL) * 100)
+        percentage = max(0, min(percentage, 100))
+        return percentage, week_total
 
-    # ----------------- UI -----------------
-    def _create_widgets(self):
-        # Main container
-        self.columnconfigure(0, weight=1)
-        self.rowconfigure(0, weight=1)
+    # =========================
+    # UI layout
+    # =========================
 
-        # Scrollable frame
-        scrollable = ctk.CTkScrollableFrame(self, fg_color="transparent")
-        scrollable.grid(row=0, column=0, sticky="nsew", padx=10, pady=10)
-        scrollable.columnconfigure(0, weight=1)
+    # --- DODANE METODY POMOCNICZE (Theming) ---
+    def _get_main_bg_color(self):
+        """Zwraca kolor tła głównego okna (ciemny/jasny)."""
+        return "#f2f2f2" if ctk.get_appearance_mode() == "Light" else "#1a1a1a"
 
-        # Header with back button and title in same row
-        header_frame = ctk.CTkFrame(scrollable, fg_color="transparent", height=60)
-        header_frame.grid(row=0, column=0, pady=(10, 10), sticky="ew", padx=40)
-        header_frame.grid_propagate(False)
-        header_frame.columnconfigure(1, weight=1)
+    def _get_card_bg_color(self):
+        """Zwraca kolor tła kart (statystyki, kalendarz, wykres)."""
+        return "#FFFFFF" if ctk.get_appearance_mode() == "Light" else "#2c2c2c"
 
-        # Back button on the left
+    def _get_inner_card_bg_color(self):
+        """Zwraca kolor tła wewnętrznych kart (passa)."""
+        return "#F5F5F5" if ctk.get_appearance_mode() == "Light" else "#1e1e1e"
+
+    def _get_text_color(self, main=True):
+        """Zwraca kolor tekstu."""
+        if main:
+            return "#4b4b4b" if ctk.get_appearance_mode() == "Light" else "#ECF0F1"
+        return "#7f8c8d" if ctk.get_appearance_mode() == "Light" else "#95a5a6"
+
+    def _go_back(self):
+        """Callback dla przycisku powrotu."""
         if self.back_callback:
-            back_button = ctk.CTkButton(
-                header_frame,
-                text="← Powrót",
-                command=self.back_callback,
-                width=100,
-                height=40,
-                fg_color="#555555",
-                hover_color="#777777",
-                font=("Arial", 14),
-            )
-            back_button.grid(row=0, column=0, padx=(0, 20), sticky="w")
+            self.back_callback()
 
-        # Title
-        ctk.CTkLabel(
-            header_frame,
-            text="Kalendarz Ćwiczeń",
-            font=("Arial", 36, "bold"),
-            text_color=self.COLOR_HEADER,
-        ).grid(row=0, column=1, sticky="w")
+    def _toggle_theme(self):
+        """Przełącza motyw Light/Dark i aktualizuje UI."""
+        if ctk.get_appearance_mode() == "Light":
+            ctk.set_appearance_mode("Dark")
+            self.theme_icon.configure(text="🌙")
+        else:
+            ctk.set_appearance_mode("Light")
+            self.theme_icon.configure(text="🌞")
 
-        # Go to day view button on the right
-        if self.show_day_callback:
-            self.go_to_day_header_button = ctk.CTkButton(
-                header_frame,
-                text="Dzisiejsze ćwiczenia→",
-                command=self._go_to_selected_day,
-                width=150,
-                height=40,
-                font=("Arial", 14, "bold"),
-                fg_color=self.COLOR_HEADER,
-                hover_color="#16A085",
-                corner_radius=10,
-            )
-            self.go_to_day_header_button.grid(row=0, column=2, padx=(20, 0), sticky="e")
+        # Aktualizuj wszystkie relevantne widżety
+        self.configure(fg_color=self._get_main_bg_color())
 
-        # Stats frame (streaks and weekly progress)
-        stats_frame = ctk.CTkFrame(scrollable, fg_color="#2c2c2c", corner_radius=15)
-        stats_frame.grid(row=1, column=0, pady=(0, 20), padx=40, sticky="ew")
+        # Karty tła
+        card_bg = self._get_card_bg_color()
+        inner_bg = self._get_inner_card_bg_color()
+        text_color = self._get_text_color(main=True)
+        secondary_color = self._get_text_color(main=False)
 
-        # (rest of UI creation — keep mostly same as before)
-        # Title container
-        title_container = ctk.CTkFrame(stats_frame, fg_color="transparent")
-        title_container.pack(fill="x", pady=(25, 20))
-        title_container.columnconfigure(1, weight=1)
+        self.stats_frame.configure(fg_color=card_bg)
+        self.calendar_container.configure(fg_color=card_bg)
+        self.chart_frame.configure(fg_color=card_bg)
+        self.details_panel.configure(fg_color=card_bg)
 
-        ctk.CTkLabel(title_container, text="━━━", font=ctk.CTkFont(size=14), text_color=self.COLOR_ACCENT).grid(
-            row=0, column=0, padx=(40, 10)
-        )
-        ctk.CTkLabel(title_container, text="STATYSTYKI", font=ctk.CTkFont(size=18, weight="bold"),
-                     text_color="#ECF0F1").grid(row=0, column=1, sticky="w")
-        ctk.CTkLabel(title_container, text="━━━", font=ctk.CTkFont(size=14), text_color=self.COLOR_ACCENT).grid(
-            row=0, column=2, padx=(10, 40)
-        )
+        # Aktualizacja elementów w statystykach
+        for child in self.stats_frame.winfo_children():
+            if isinstance(child, ctk.CTkFrame):
+                child.configure(fg_color="transparent")
+                for grand_child in child.winfo_children():
+                    if isinstance(grand_child, ctk.CTkFrame):
+                        grand_child.configure(fg_color=inner_bg)
+                        for great_grand_child in grand_child.winfo_children():
+                            if isinstance(great_grand_child, ctk.CTkLabel):
+                                if great_grand_child not in [self.daily_streak_label, self.weekly_streak_label]:
+                                    current_text = great_grand_child.cget("text")
+                                    if "PASSA" in current_text or "STATYSTYKI" in current_text:
+                                        great_grand_child.configure(text_color=secondary_color)
+                                    elif "dni" in current_text or "tyg." in current_text:
+                                        great_grand_child.configure(text_color=secondary_color)
+                                    elif "POSTĘP" in current_text:
+                                        great_grand_child.configure(text_color=secondary_color)
+                                    else:
+                                        great_grand_child.configure(text_color=text_color)
 
-        daily_streak = self._calculate_daily_streak()
-        weekly_streak = self._calculate_weekly_streak()
-        week_progress, week_total = self._get_current_week_progress()
+        # Aktualizacja elementów w kalendarzu
+        self.month_label.configure(text_color=text_color)
 
-        # Streaks container
-        streaks_container = ctk.CTkFrame(stats_frame, fg_color="transparent")
-        streaks_container.pack(fill="x", padx=20, pady=(0, 15))
-        streaks_container.columnconfigure(0, weight=1)
-        streaks_container.columnconfigure(1, weight=1)
+        # Aktualizacja elementów w panelu szczegółów
+        for child in self.details_panel.winfo_children():
+            if isinstance(child, ctk.CTkFrame):
+                child.configure(fg_color="transparent")
+                for grand_child in child.winfo_children():
+                    if isinstance(grand_child, ctk.CTkFrame) and grand_child.cget("fg_color") != "transparent":
+                        grand_child.configure(fg_color=inner_bg)
 
-        # Daily streak card
-        daily_streak_frame = ctk.CTkFrame(streaks_container, fg_color="#1e1e1e", corner_radius=12)
-        daily_streak_frame.grid(row=0, column=0, padx=(0, 10), sticky="ew")
-        ctk.CTkLabel(daily_streak_frame, text="🔥", font=ctk.CTkFont(size=28)).pack(pady=(20, 5))
-        ctk.CTkLabel(daily_streak_frame, text="PASSA DZIENNA", font=ctk.CTkFont(size=13, weight="bold"),
-                     text_color="#95a5a6").pack(pady=(0, 5))
-        self.daily_streak_label = ctk.CTkLabel(daily_streak_frame, text=f"{daily_streak}",
-                                              font=ctk.CTkFont(size=36, weight="bold"), text_color=self.COLOR_ACCENT)
-        self.daily_streak_label.pack(pady=(0, 5))
-        ctk.CTkLabel(daily_streak_frame, text="dni", font=ctk.CTkFont(size=12), text_color="#7f8c8d").pack(pady=(0, 20))
-
-        # Weekly streak card
-        weekly_streak_frame = ctk.CTkFrame(streaks_container, fg_color="#1e1e1e", corner_radius=12)
-        weekly_streak_frame.grid(row=0, column=1, padx=(10, 0), sticky="ew")
-        ctk.CTkLabel(weekly_streak_frame, text="📅", font=ctk.CTkFont(size=28)).pack(pady=(20, 5))
-        ctk.CTkLabel(weekly_streak_frame, text="PASSA TYGODNIOWA",
-                     font=ctk.CTkFont(size=13, weight="bold"), text_color="#95a5a6").pack(pady=(0, 5))
-        self.weekly_streak_label = ctk.CTkLabel(weekly_streak_frame, text=f"{weekly_streak}",
-                                                font=ctk.CTkFont(size=36, weight="bold"), text_color=self.COLOR_TODAY)
-        self.weekly_streak_label.pack(pady=(0, 5))
-        ctk.CTkLabel(weekly_streak_frame, text="tyg.", font=ctk.CTkFont(size=12), text_color="#7f8c8d").pack(pady=(0, 20))
-
-        # Weekly progress section
-        progress_section = ctk.CTkFrame(stats_frame, fg_color="#1e1e1e", corner_radius=12)
-        progress_section.pack(fill="x", padx=20, pady=(0, 25))
-        ctk.CTkLabel(progress_section, text="POSTĘP TYGODNIOWY", font=ctk.CTkFont(size=14, weight="bold"),
-                     text_color="#95a5a6").pack(pady=(20, 15))
-
-        progress_container = ctk.CTkFrame(progress_section, fg_color="transparent")
-        progress_container.pack(fill="x", padx=30, pady=(0, 10))
-
-        progress_color = self.COLOR_GOAL_MET if week_progress >= 100 else self.COLOR_ACCENT
-
-        self.week_progress_bar = ctk.CTkProgressBar(progress_container, height=25, progress_color=progress_color,
-                                                   corner_radius=12)
-        self.week_progress_bar.pack(fill="x")
-        self.week_progress_bar.set(week_progress / 100)
-
-        self.week_progress_label = ctk.CTkLabel(progress_section,
-                                                text=f"{week_total}/{self.WEEKLY_GOAL} min ({week_progress}%)",
-                                                font=ctk.CTkFont(size=16, weight="bold"), text_color="#ECF0F1")
-        self.week_progress_label.pack(pady=(10, 20))
-
-        # Calendar container
-        calendar_container = ctk.CTkFrame(scrollable, fg_color="#2c2c2c", corner_radius=15)
-        calendar_container.grid(row=2, column=0, pady=(0, 20), padx=40, sticky="ew")
-
-        # Navigation
-        nav_container = ctk.CTkFrame(calendar_container, fg_color="transparent")
-        nav_container.pack(fill="x", pady=(25, 15))
-        nav_container.columnconfigure(1, weight=1)
-
-        ctk.CTkLabel(nav_container, text="━━━", font=ctk.CTkFont(size=14), text_color=self.COLOR_TODAY).grid(row=0,
-                                                                                                            column=0,
-                                                                                                            padx=(40,
-                                                                                                                  10))
-
-        nav_frame = ctk.CTkFrame(nav_container, fg_color="transparent")
-        nav_frame.grid(row=0, column=1)
-
-        prev_button = ctk.CTkButton(nav_frame, text="◄", command=self._previous_month, width=45, height=40,
-                                    font=ctk.CTkFont(size=20, weight="bold"), fg_color=self.COLOR_TODAY,
-                                    hover_color="#2980B9", corner_radius=10)
-        prev_button.pack(side="left", padx=10)
-
-        self.month_label = ctk.CTkLabel(nav_frame, text="", font=ctk.CTkFont(size=24, weight="bold"),
-                                        text_color="#ECF0F1", width=300)
-        self.month_label.pack(side="left", padx=20)
-
-        next_button = ctk.CTkButton(nav_frame, text="►", command=self._next_month, width=45, height=40,
-                                    font=ctk.CTkFont(size=20, weight="bold"), fg_color=self.COLOR_TODAY,
-                                    hover_color="#2980B9", corner_radius=10)
-        next_button.pack(side="left", padx=10)
-
-        ctk.CTkLabel(nav_container, text="━━━", font=ctk.CTkFont(size=14), text_color=self.COLOR_TODAY).grid(row=0,
-                                                                                                             column=2,
-                                                                                                             padx=(10,
-                                                                                                                   40))
-
-        # Calendar frame
-        self.calendar_frame = ctk.CTkFrame(calendar_container, fg_color="transparent")
-        self.calendar_frame.pack(pady=(15, 25), padx=20)
-
-        # Chart frame
-        self.chart_frame = ctk.CTkFrame(scrollable, fg_color="#2c2c2c", corner_radius=15)
-        self.chart_frame.grid(row=3, column=0, pady=(0, 20), padx=40, sticky="ew")
-
-        # Details panel
-        self.details_panel = ctk.CTkFrame(scrollable, fg_color="#2c2c2c", corner_radius=15)
-        self.details_panel.grid(row=4, column=0, pady=(0, 20), padx=40, sticky="ew")
-        self.details_panel.grid_remove()
-
-        # Details header
-        details_title_container = ctk.CTkFrame(self.details_panel, fg_color="transparent")
-        details_title_container.pack(fill="x", pady=(25, 15))
-        details_title_container.columnconfigure(1, weight=1)
-        ctk.CTkLabel(details_title_container, text="━━━", font=ctk.CTkFont(size=14),
-                     text_color=self.COLOR_FOCUS).grid(row=0, column=0, padx=(40, 10))
-        ctk.CTkLabel(details_title_container, text="SZCZEGÓŁY DNIA", font=ctk.CTkFont(size=18, weight="bold"),
-                     text_color="#ECF0F1").grid(row=0, column=1, sticky="w")
-        ctk.CTkLabel(details_title_container, text="━━━", font=ctk.CTkFont(size=14),
-                     text_color=self.COLOR_FOCUS).grid(row=0, column=2, padx=(10, 40))
-
-        details_content_frame = ctk.CTkFrame(self.details_panel, fg_color="transparent")
-        details_content_frame.pack(fill="both", expand=True, padx=40, pady=(0, 25))
-        details_content_frame.columnconfigure(0, weight=1)
-
-        self.details_label = ctk.CTkLabel(details_content_frame, text="", font=ctk.CTkFont(size=14),
-                                         text_color="#ECF0F1", justify="left")
-        self.details_label.grid(row=0, column=0, sticky="w", pady=(0, 15))
-
-        # Edit practice time UI
-        edit_frame = ctk.CTkFrame(details_content_frame, fg_color="#1e1e1e", corner_radius=12)
-        edit_frame.grid(row=1, column=0, sticky="ew", pady=(0, 0))
-        edit_inner = ctk.CTkFrame(edit_frame, fg_color="transparent")
-        edit_inner.pack(fill="x", padx=20, pady=15)
-        ctk.CTkLabel(edit_inner, text="Zmień czas ćwiczeń:", font=ctk.CTkFont(size=13, weight="bold"),
-                     text_color="#95a5a6").pack(anchor="w", pady=(0, 10))
-        time_input_frame = ctk.CTkFrame(edit_inner, fg_color="transparent")
-        time_input_frame.pack(anchor="w")
-        self.minutes_entry = ctk.CTkEntry(time_input_frame, width=100, height=40, font=ctk.CTkFont(size=16),
-                                          placeholder_text="0")
-        self.minutes_entry.pack(side="left", padx=(0, 10))
-        ctk.CTkLabel(time_input_frame, text="minut", font=ctk.CTkFont(size=14), text_color="#ECF0F1").pack(
-            side="left", padx=(0, 15))
-        self.save_time_button = ctk.CTkButton(time_input_frame, text="Zapisz", command=self._save_practice_time,
-                                              width=80, height=40, font=ctk.CTkFont(size=14, weight="bold"),
-                                              fg_color=self.COLOR_GOAL_MET, hover_color="#229954", corner_radius=20)
-        self.save_time_button.pack(side="left")
-
-        # Initial render
+        self.details_label.configure(text_color=text_color)
         self._render_calendar()
         self._render_chart()
+        self._update_stats()
 
-        # Show today's details automatically after a brief delay
-        self.after(100, self._select_today)
+    def _build_header(self):
+        """Tworzy nowy, biały nagłówek."""
+        self.header = ctk.CTkFrame(self, fg_color=self.HEADER_BG, height=72, corner_radius=12)
+        self.header.grid(row=0, column=0, columnspan=2, sticky="ew", padx=10, pady=(20, 10))
+        self.header.grid_propagate(False)
+        self.header.columnconfigure(1, weight=1)
+        self.header.rowconfigure(0, weight=1)
 
-    # ----------------- RENDER CALENDAR -----------------
+        # Lewa strona: Ikona + strzałka powrotu
+        left = ctk.CTkFrame(self.header, fg_color="transparent")
+        left.grid(row=0, column=0, sticky="w", padx=(18, 10))
+
+        # Poprawiona ścieżka do ikony
+        icon_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "assets", "icon.png")
+        if os.path.exists(icon_path):
+            app_icon = ctk.CTkImage(light_image=Image.open(icon_path), size=(60, 65))
+            ctk.CTkLabel(left, image=app_icon, text="").pack(side="left", anchor="center")
+
+        if self.back_callback:
+            ctk.CTkButton(
+                left, text="←", width=44, height=44,
+                fg_color=self.ACCENT_LAVENDER, hover_color=self.ACCENT_PURPLE,
+                command=self._go_back,
+                corner_radius=12
+            ).pack(side="left", anchor="center", padx=(10, 0))
+
+        # Środek: Tytuł
+        title = ctk.CTkLabel(
+            self.header, text="Kalendarz Ćwiczeń",  # Tytuł
+            font=ctk.CTkFont(size=40, weight="bold"), text_color=self.ACCENT_CYAN
+        )
+        title.grid(row=0, column=1, sticky="w")
+
+        # Prawa strona: Przycisk do dnia + Przełącznik motywu
+        right = ctk.CTkFrame(self.header, fg_color="transparent")
+        right.grid(row=0, column=2, sticky="e", padx=(10, 18))
+
+        self.go_to_day_header_button = ctk.CTkButton(
+            right, text="Dzisiejsze ćwiczenia→",
+            command=self._go_to_selected_day, width=180, height=40,
+            font=("Arial", 14, "bold"), fg_color=self.ACCENT_CYAN,
+            hover_color="#16A085", corner_radius=10
+        )
+        self.go_to_day_header_button.pack(side="left", padx=(0, 10))
+
+        self.theme_icon = ctk.CTkButton(
+            right, width=44, height=44,
+            fg_color=self.ACCENT_GOLD,
+            hover_color=self.ACCENT_CYAN,
+            text="🌞",
+            command=self._toggle_theme,
+            corner_radius=12,
+            font=ctk.CTkFont(size=22)
+        )
+        self.theme_icon.pack(side="right", anchor="center")
+
+    # --- KONIEC DODANYCH METOD POMOCNICZYCH ---
+
+    def _create_widgets(self):
+        # Siatka główna
+        self.grid_rowconfigure(0, weight=0)
+        self.grid_rowconfigure(1, weight=1, uniform="grid")
+        self.grid_rowconfigure(2, weight=1, uniform="grid")
+        self.grid_columnconfigure(0, weight=1, uniform="grid")
+        self.grid_columnconfigure(1, weight=1, uniform="grid")
+
+        # Header (NOWY)
+        self._build_header()  # <-- ZASTĄPIENIE STAREGO NAGŁÓWKA
+
+        # Lewo-góra: Statystyki
+        self.stats_frame = ctk.CTkFrame(self, fg_color=self._get_card_bg_color(),
+                                        corner_radius=14)  # <-- DYNAMICZNE TŁO
+        self.stats_frame.grid(row=1, column=0, sticky="nsew", padx=(24, 12), pady=(8, 12))
+        self._build_stats(self.stats_frame)
+
+        # Prawo-góra: Kalendarz
+        self.calendar_container = ctk.CTkFrame(self, fg_color=self._get_card_bg_color(),
+                                               corner_radius=14)  # <-- DYNAMICZNE TŁO
+        self.calendar_container.grid(row=1, column=1, sticky="nsew", padx=(12, 24), pady=(8, 12))
+        self._build_calendar_container(self.calendar_container)
+
+        # Lewo-dół: Wykres
+        self.chart_frame = ctk.CTkFrame(self, fg_color=self._get_card_bg_color(),
+                                        corner_radius=14)  # <-- DYNAMICZNE TŁO
+        self.chart_frame.grid(row=2, column=0, sticky="nsew", padx=(24, 12), pady=(12, 24))
+        self.chart_frame.bind("<Configure>", lambda e: self._render_chart())
+
+        # Prawo-dół: Szczegóły dnia
+        self.details_panel = ctk.CTkFrame(self, fg_color=self._get_card_bg_color(),
+                                          corner_radius=14)  # <-- DYNAMICZNE TŁO
+        self.details_panel.grid(row=2, column=1, sticky="nsew", padx=(12, 24), pady=(12, 24))
+        self._build_details_panel(self.details_panel)
+        self.details_panel.grid_remove()  # domyślnie ukryty
+
+    # ---------------------
+    # Sekcja: Statystyki
+    # ---------------------
+    def _build_stats(self, parent):
+        parent.grid_columnconfigure(0, weight=1)
+        parent.grid_rowconfigure(0, weight=0)
+        parent.grid_rowconfigure(1, weight=1)
+
+        title_container = ctk.CTkFrame(parent, fg_color="transparent")
+        title_container.grid(row=0, column=0, sticky="ew", padx=16, pady=(16, 8))
+        title_container.grid_columnconfigure(0, weight=1)
+
+        ctk.CTkLabel(
+            title_container, text="STATYSTYKI",
+            font=ctk.CTkFont(size=16, weight="bold"), text_color=self._get_text_color(main=False)  # <-- ZMIANA
+        ).grid(row=0, column=0, sticky="w")
+
+        cards = ctk.CTkFrame(parent, fg_color="transparent")
+        cards.grid(row=1, column=0, sticky="nsew", padx=16, pady=(8, 8))
+        cards.grid_columnconfigure(0, weight=1)
+        cards.grid_columnconfigure(1, weight=1)
+        cards.grid_rowconfigure(0, weight=1)
+
+        daily = ctk.CTkFrame(cards, fg_color=self._get_inner_card_bg_color(), corner_radius=12)  # <-- DYNAMICZNE TŁO
+        daily.grid(row=0, column=0, sticky="nsew", padx=(0, 8), pady=4)
+        ctk.CTkLabel(daily, text="🔥", font=ctk.CTkFont(size=24)).pack(pady=(16, 4))
+        ctk.CTkLabel(daily, text="PASSA DZIENNA",
+                     font=ctk.CTkFont(size=12, weight="bold"),
+                     text_color=self._get_text_color(main=False)).pack(pady=(0, 4))  # <-- ZMIANA
+        self.daily_streak_label = ctk.CTkLabel(daily, text="0",
+                                               font=ctk.CTkFont(size=30, weight="bold"),
+                                               text_color=self.COLOR_ACCENT)
+        self.daily_streak_label.pack(pady=(0, 4))
+        ctk.CTkLabel(daily, text="dni",
+                     font=ctk.CTkFont(size=11), text_color=self._get_text_color(main=False)).pack(
+            pady=(0, 12))  # <-- ZMIANA
+
+        weekly = ctk.CTkFrame(cards, fg_color=self._get_inner_card_bg_color(), corner_radius=12)  # <-- DYNAMICZNE TŁO
+        weekly.grid(row=0, column=1, sticky="nsew", padx=(8, 0), pady=4)
+        ctk.CTkLabel(weekly, text="📅", font=ctk.CTkFont(size=24)).pack(pady=(16, 4))
+        ctk.CTkLabel(weekly, text="PASSA TYGODNIOWA",
+                     font=ctk.CTkFont(size=12, weight="bold"),
+                     text_color=self._get_text_color(main=False)).pack(pady=(0, 4))  # <-- ZMIANA
+        self.weekly_streak_label = ctk.CTkLabel(weekly, text="0",
+                                                font=ctk.CTkFont(size=30, weight="bold"),
+                                                text_color=self.COLOR_TODAY)
+        self.weekly_streak_label.pack(pady=(0, 4))
+        ctk.CTkLabel(weekly, text="tyg.",
+                     font=ctk.CTkFont(size=11), text_color=self._get_text_color(main=False)).pack(
+            pady=(0, 12))  # <-- ZMIANA
+
+        progress_section = ctk.CTkFrame(parent, fg_color=self._get_inner_card_bg_color(),
+                                        corner_radius=12)  # <-- DYNAMICZNE TŁO
+        progress_section.grid(row=2, column=0, sticky="ew", padx=16, pady=(4, 16))
+        ctk.CTkLabel(progress_section, text="POSTĘP TYGODNIOWY",
+                     font=ctk.CTkFont(size=13, weight="bold"),
+                     text_color=self._get_text_color(main=False)).pack(pady=(12, 8))  # <-- ZMIANA
+
+        self.week_progress_bar = ctk.CTkProgressBar(progress_section, height=18, corner_radius=10)
+        self.week_progress_bar.pack(fill="x", padx=16)
+        self.week_progress_label = ctk.CTkLabel(progress_section, text="",
+                                                font=ctk.CTkFont(size=14, weight="bold"),
+                                                text_color=self._get_text_color(main=True))  # <-- ZMIANA
+        self.week_progress_label.pack(pady=(8, 12))
+
+        self._update_stats()
+
+    # ---------------------
+    # Sekcja: Kalendarz
+    # ---------------------
+    def _build_calendar_container(self, parent):
+        parent.grid_columnconfigure(0, weight=1)
+        parent.grid_rowconfigure(0, weight=0)
+        parent.grid_rowconfigure(1, weight=1)
+
+        nav = ctk.CTkFrame(parent, fg_color="transparent", height=40)
+        nav.grid(row=0, column=0, sticky="ew", padx=16, pady=(16, 8))
+        nav.grid_columnconfigure(0, weight=1)
+        nav.grid_columnconfigure(1, weight=0)
+        nav.grid_columnconfigure(2, weight=0)
+
+        self.month_label = ctk.CTkLabel(nav, text="", font=ctk.CTkFont(size=18, weight="bold"),
+                                        text_color=self._get_text_color(main=True))  # <-- ZMIANA
+        self.month_label.grid(row=0, column=0, sticky="w")
+
+        prev_button = ctk.CTkButton(
+            nav, text="◄", command=self._previous_month, width=40, height=32,
+            font=ctk.CTkFont(size=16, weight="bold"),
+            fg_color=self.COLOR_TODAY, hover_color="#2980B9", corner_radius=8
+        )
+        prev_button.grid(row=0, column=1, padx=(8, 6), sticky="e")
+
+        next_button = ctk.CTkButton(
+            nav, text="►", command=self._next_month, width=40, height=32,
+            font=ctk.CTkFont(size=16, weight="bold"),
+            fg_color=self.COLOR_TODAY, hover_color="#2980B9", corner_radius=8
+        )
+        next_button.grid(row=0, column=2, padx=(6, 0), sticky="e")
+
+        self.calendar_frame = ctk.CTkFrame(parent, fg_color="transparent")
+        self.calendar_frame.grid(row=1, column=0, sticky="nsew", padx=12, pady=(4, 16))
+
     def _render_calendar(self):
-        # Clear cache for new month
         self.week_totals_cache.clear()
 
-        # Clear existing calendar
-        for widget in self.calendar_frame.winfo_children():
-            widget.destroy()
-
-        # Reset focused frame reference since widgets are destroyed
+        for w in self.calendar_frame.winfo_children():
+            w.destroy()
         self.focused_day_frame = None
 
-        # Update month label
         month_names = [
             "Styczeń", "Luty", "Marzec", "Kwiecień", "Maj", "Czerwiec",
             "Lipiec", "Sierpień", "Wrzesień", "Październik", "Listopad", "Grudzień"
         ]
         self.month_label.configure(text=f"{month_names[self.current_month - 1]} {self.current_year}")
 
-        # Create calendar grid
         cal = calendar.monthcalendar(self.current_year, self.current_month)
 
-        # Day headers
+        # Nagłówki dni
         day_names = ["Pon", "Wt", "Śr", "Czw", "Pt", "Sob", "Nie"]
-        for col, day_name in enumerate(day_names):
-            header = ctk.CTkLabel(self.calendar_frame, text=day_name, font=("Arial", 16, "bold"),
-                                  width=85, height=35, fg_color="#1e1e1e", corner_radius=8)
-            header.grid(row=0, column=col, padx=3, pady=3)
+        header_row = ctk.CTkFrame(self.calendar_frame, fg_color="transparent")
+        header_row.pack(fill="x", pady=(0, 6))
+        header_bg_color = self._get_inner_card_bg_color()  # <-- DYNAMICZNE TŁO
+        header_text_color = self._get_text_color(main=True)  # <-- DYNAMICZNY KOLOR
 
-        # Calendar days
-        week_goals_to_show = {}
+        for day_name in day_names:
+            ctk.CTkLabel(
+                header_row, text=day_name, font=("Arial", 12, "bold"),
+                width=self.DAY_CELL_SIZE, height=20, fg_color=header_bg_color, corner_radius=6, anchor="center",
+                text_color=header_text_color
+            ).pack(side="left", padx=3)
 
-        for week_num, week in enumerate(cal, start=1):
-            week_total = 0
+        # Wiersze tygodni
+        for week in cal:
+            row_frame = ctk.CTkFrame(self.calendar_frame, fg_color="transparent")
+            row_frame.pack(pady=3)
+
             week_start_date = None
-
-            for day_num, day in enumerate(week):
+            for day in week:
                 if day == 0:
+                    spacer = ctk.CTkFrame(row_frame, fg_color="transparent",
+                                          width=self.DAY_CELL_SIZE, height=self.DAY_CELL_SIZE)
+                    spacer.pack(side="left", padx=3)
                     continue
+
                 date_obj = datetime(self.current_year, self.current_month, day)
                 minutes = self._get_practice_minutes(date_obj)
-
                 if week_start_date is None:
                     week_start_date = date_obj
 
-                is_today = (date_obj.year == self.current_date.year and date_obj.month == self.current_date.month and date_obj.day == self.current_date.day)
-                is_focused = (self.focused_day is not None and date_obj.year == self.focused_day.year and date_obj.month == self.focused_day.month and date_obj.day == self.focused_day.day)
+                is_today = (
+                        date_obj.year == self.current_date.year and
+                        date_obj.month == self.current_date.month and
+                        date_obj.day == self.current_date.day
+                )
+                is_focused = (
+                        self.focused_day is not None and
+                        date_obj.year == self.focused_day.year and
+                        date_obj.month == self.focused_day.month and
+                        date_obj.day == self.focused_day.day
+                )
 
                 if is_today:
                     bg_color = self.COLOR_TODAY
-                    border_width = 3
+                    border_width = 2
                     border_color = "white"
                 elif minutes >= self.PRACTICE_GOAL:
                     bg_color = self.COLOR_GOAL_MET
-                    border_width = 3 if is_focused else 0
-                    border_color = "#F39C12"
+                    border_width = 2 if is_focused else 0
+                    border_color = self.COLOR_FOCUS
                 else:
                     bg_color = self.COLOR_GOAL_NOT_MET
-                    border_width = 3 if is_focused else 0
-                    border_color = "#F39C12"
+                    border_width = 2 if is_focused else 0
+                    border_color = self.COLOR_FOCUS
 
-                day_frame = ctk.CTkFrame(self.calendar_frame, fg_color=bg_color, width=85, height=85, corner_radius=43,
-                                         border_width=border_width, border_color=border_color if is_focused else ("white" if is_today else ""))
-                day_frame.grid(row=week_num, column=day_num, padx=3, pady=3)
+                day_frame = ctk.CTkFrame(
+                    row_frame, fg_color=bg_color,
+                    width=self.DAY_CELL_SIZE, height=self.DAY_CELL_SIZE,
+                    corner_radius=self.DAY_CELL_RADIUS,
+                    border_width=border_width,
+                    border_color=border_color if is_focused else ("white" if is_today else "")
+                )
+                day_frame.pack(side="left", padx=3)
                 day_frame.grid_propagate(False)
 
                 if is_focused:
                     self.focused_day_frame = day_frame
 
-                day_label = ctk.CTkLabel(day_frame, text=str(day), font=("Arial", 22, "bold"), text_color="white")
+                # Tekst w środku dnia jest ZAWSZE biały lub ciemny w zależności od tła komórki
+                text_color = "white" if bg_color in [self.COLOR_TODAY, self.COLOR_GOAL_MET] else self._get_text_color(
+                    main=True)
+
+                day_label = ctk.CTkLabel(
+                    day_frame, text=str(day), font=("Arial", 14, "bold"), text_color=text_color
+                )
                 day_label.place(relx=0.5, rely=0.5, anchor="center")
 
-                # Make clickable
                 day_frame.bind("<Button-1>", lambda e, d=date_obj, f=day_frame: self._on_day_click(d, f))
                 day_label.bind("<Button-1>", lambda e, d=date_obj, f=day_frame: self._on_day_click(d, f))
 
+            # Indykator tygodnia (✓/✗ + %)
             if week_start_date is not None:
                 week_total = self._get_week_total(week_start_date)
-                week_goals_to_show[week_num] = week_total
+                goal_met = week_total >= self.WEEKLY_GOAL
+                percentage = 0 if week_total <= 0 else int((week_total / self.WEEKLY_GOAL) * 100)
+                percentage = max(0, min(percentage, 100))
 
-        # Add weekly goal indicators
-        for week_num, week_total in week_goals_to_show.items():
-            goal_met = week_total >= self.WEEKLY_GOAL
-            percentage = int((week_total / self.WEEKLY_GOAL) * 100) if self.WEEKLY_GOAL else 0
+                indicator = ctk.CTkFrame(row_frame, fg_color="transparent",
+                                         width=self.DAY_CELL_SIZE, height=self.DAY_CELL_SIZE)
+                indicator.pack(side="left", padx=(8, 0))
 
-            indicator_frame = ctk.CTkFrame(self.calendar_frame, fg_color="transparent", width=60, height=85)
-            indicator_frame.grid(row=week_num, column=7, padx=(10, 0), pady=3)
-            indicator_frame.grid_propagate(False)
+                symbol = "✓" if goal_met else "✗"
+                symbol_color = self.COLOR_GOAL_MET if goal_met else "#E74C3C"
+                percentage_color = "white" if goal_met and ctk.get_appearance_mode() == "Dark" else symbol_color
 
-            if goal_met:
-                symbol = "✓"
-                symbol_color = self.COLOR_GOAL_MET
-            else:
-                symbol = "✗"
-                symbol_color = "#E74C3C"
+                ctk.CTkLabel(indicator, text=symbol, font=("Arial", 16, "bold"),
+                             text_color=symbol_color).place(relx=0.5, rely=0.35, anchor="center")
+                ctk.CTkLabel(indicator, text=f"{percentage}%",
+                             font=("Arial", 10, "bold"),
+                             text_color=percentage_color).place(relx=0.5, rely=0.75, anchor="center")
 
-            symbol_label = ctk.CTkLabel(indicator_frame, text=symbol, font=("Arial", 28, "bold"), text_color=symbol_color)
-            symbol_label.place(relx=0.5, rely=0.35, anchor="center")
-
-            percentage_label = ctk.CTkLabel(indicator_frame, text=f"{percentage}%", font=("Arial", 13, "bold"),
-                                            text_color="white" if goal_met else "#E74C3C")
-            percentage_label.place(relx=0.5, rely=0.72, anchor="center")
-
-    # ----------------- CHART (with quiz overlay) -----------------
+    # ---------------------
+    # Sekcja: Wykres
+    # ---------------------
     def _render_chart(self):
-        """Render monthly practice time chart + percent-correct line from quizzes (interval+harmony)."""
-        for widget in self.chart_frame.winfo_children():
-            widget.destroy()
-        self.chart_frame.update_idletasks()
+        for w in self.chart_frame.winfo_children():
+            w.destroy()
 
+        # Dane
         cal = calendar.monthcalendar(self.current_year, self.current_month)
         days = []
         minutes_list = []
-        percent_correct_list = []  # per-day percent (None if no quiz)
-
         for week in cal:
             for day in week:
                 if day != 0:
-                    date_obj = datetime(self.current_year, self.current_month, day)
+                    d = datetime(self.current_year, self.current_month, day)
                     days.append(day)
-                    minutes_list.append(self._get_practice_minutes(date_obj))
+                    minutes_list.append(self._get_practice_minutes(d))
 
-                    # compute percent correct for interval + harmony combined
-                    qm = self._get_quiz_metrics_for_day(date_obj)
-                    total_correct = qm["interval_correct"] + qm["harmony_correct"]
-                    total_wrong = qm["interval_wrong"] + qm["harmony_wrong"]
-                    total = total_correct + total_wrong
-                    if total > 0:
-                        percent = (total_correct / total) * 100.0
-                        percent_correct_list.append(percent)
-                    else:
-                        percent_correct_list.append(None)
+        # Rozmiar figury zależny od ramki – zmniejszony do 65%
+        self.chart_frame.update_idletasks()
+        w_px = max(self.chart_frame.winfo_width(), 300)
+        h_px = max(self.chart_frame.winfo_height(), 220)
+        dpi = 100
 
-        fig = Figure(figsize=(10, 3.5), facecolor='none', dpi=80)
+        CHART_SIZE_RATIO = 0.65
+
+        # Kolory Matplotlib zależne od motywu
+        if ctk.get_appearance_mode() == "Dark":
+            face_color = '#2c2c2c'
+            bar_color = '#34495E'
+            text_color = 'white'
+            grid_color = '#555'
+        else:  # Light
+            face_color = '#FFFFFF'
+            bar_color = '#BDC3C7'
+            text_color = '#4b4b4b'
+            grid_color = '#ccc'
+
+        fig = Figure(figsize=(w_px * CHART_SIZE_RATIO / dpi, h_px * CHART_SIZE_RATIO / dpi), facecolor='none', dpi=dpi)
         ax = fig.add_subplot(111)
 
-        # Bars for minutes
-        bars = ax.bar(days, minutes_list, color='#34495E', edgecolor='none', width=0.8)
-        for i, minutes in enumerate(minutes_list):
-            if minutes >= self.PRACTICE_GOAL:
-                bars[i].set_color('#27AE60')
+        bars = ax.bar(days, minutes_list, color=bar_color, edgecolor='none', width=0.8)  # <-- DYNAMICZNY KOLOR SŁUPKÓW
+        for i, m in enumerate(minutes_list):
+            if m >= self.PRACTICE_GOAL:
+                bars[i].set_color('#27AE60')  # Cel osiągnięty jest stały
 
-        ax.set_xlabel('Dzień', color='white', fontsize=11, fontweight='bold')
-        ax.set_ylabel('Minuty', color='white', fontsize=11, fontweight='bold')
-        ax.set_title(f'Przegląd miesiąca', color='white', fontsize=14, fontweight='bold', pad=15)
-        ax.set_facecolor('#1e1e1e')
-        ax.tick_params(colors='white', labelsize=9)
-        ax.spines['bottom'].set_color('#555')
-        ax.spines['left'].set_color('#555')
+        ax.axhline(y=self.PRACTICE_GOAL, color=self.COLOR_FOCUS, linestyle='--',
+                   linewidth=2, label=f'Cel ({self.PRACTICE_GOAL} min)', alpha=0.8)
+
+        # Oś i styl
+        ax.set_xlabel('Dni miesiąca', color=text_color, fontsize=10, fontweight='bold')
+        ax.set_ylabel('Minuty', color=text_color, fontsize=10, fontweight='bold')
+        ax.set_title('Przegląd miesiąca', color=text_color, fontsize=12, fontweight='bold', pad=10)
+        ax.set_facecolor(face_color)
+        ax.tick_params(colors=text_color, labelsize=9)
+        ax.spines['bottom'].set_color(grid_color)
+        ax.spines['left'].set_color(grid_color)
         ax.spines['top'].set_visible(False)
         ax.spines['right'].set_visible(False)
-        ax.grid(True, alpha=0.15, color='white', linestyle='-', linewidth=0.5)
+        ax.legend(facecolor=face_color, edgecolor=grid_color, labelcolor=text_color,
+                  fontsize=9, loc='upper right')
+        ax.grid(True, alpha=0.15, color=grid_color, linestyle='-', linewidth=0.5)
 
-        # Add goal line
-        ax.axhline(y=self.PRACTICE_GOAL, color='#F39C12', linestyle='--', linewidth=2, label=f'Cel ({self.PRACTICE_GOAL} min)', alpha=0.8)
-
-        # Plot percent-correct on secondary axis
-        ax2 = ax.twinx()
-        ax2.set_ylabel('Procent poprawnych (interval+harmony)', color='white', fontsize=11, fontweight='bold')
-        # Build x positions for percent data, skipping None values
-        xs = [d for d, p in zip(days, percent_correct_list) if p is not None]
-        ys = [p for p in percent_correct_list if p is not None]
-        if xs:
-            ax2.plot(xs, ys, marker='o', linestyle='-', linewidth=2, label='Procent poprawnych (%)', color='#9c2222')
-            ax2.set_ylim(0, 100)
-            ax2.tick_params(colors='white')
-
-        # Legend
-        handles, labels = ax.get_legend_handles_labels()
-        h2, l2 = ax2.get_legend_handles_labels()
-        ax.legend(handles + h2, labels + l2, facecolor='#2B2B2B', edgecolor='#555', labelcolor='white', fontsize=10, loc='upper right')
-
-        fig.tight_layout(pad=1.5)
+        # Dopasowanie marginesów
+        fig.subplots_adjust(left=0.15, right=0.9, top=0.90, bottom=0.22)
 
         canvas = FigureCanvasTkAgg(fig, master=self.chart_frame)
         canvas.draw()
         widget = canvas.get_tk_widget()
-        widget.configure(bg='#2B2B2B', highlightthickness=0)
-        widget.pack(fill="both", expand=True, padx=20, pady=10)
+        widget.configure(bg=face_color, highlightthickness=0)
 
-    # ----------------- DAY DETAILS (with quiz info) -----------------
+        # WYŚRODKOWANIE WYKRESU: Użycie place z relx/rely i anchor="center"
+        widget.place(relx=0.5, rely=0.5, anchor="center")
+
+    # ---------------------
+    # Szczegóły dnia
+    # ---------------------
+    def _build_details_panel(self, parent):
+        parent.grid_columnconfigure(0, weight=1)
+        parent.grid_rowconfigure(0, weight=0)
+        parent.grid_rowconfigure(1, weight=1)
+        parent.grid_rowconfigure(2, weight=0)
+
+        title_container = ctk.CTkFrame(parent, fg_color="transparent")
+        title_container.grid(row=0, column=0, sticky="ew", padx=16, pady=(16, 8))
+        ctk.CTkLabel(
+            title_container, text="SZCZEGÓŁY DNIA",
+            font=ctk.CTkFont(size=16, weight="bold"), text_color=self._get_text_color(main=False)  # <-- ZMIANA
+        ).grid(row=0, column=0, sticky="w")
+
+        details_content_frame = ctk.CTkFrame(parent, fg_color="transparent")
+        details_content_frame.grid(row=1, column=0, sticky="nsew", padx=16, pady=(0, 12))
+        details_content_frame.grid_columnconfigure(0, weight=1)
+
+        self.details_label = ctk.CTkLabel(
+            details_content_frame, text="", font=ctk.CTkFont(size=13),
+            text_color=self._get_text_color(main=True), justify="left"  # <-- ZMIANA
+        )
+        self.details_label.grid(row=0, column=0, sticky="nw", pady=(0, 8))
+
+        edit_frame = ctk.CTkFrame(parent, fg_color=self._get_inner_card_bg_color(),
+                                  corner_radius=12)  # <-- DYNAMICZNE TŁO
+        edit_frame.grid(row=2, column=0, sticky="ew", padx=16, pady=(0, 16))
+
+        edit_inner = ctk.CTkFrame(edit_frame, fg_color="transparent")
+        edit_inner.pack(fill="x", padx=16, pady=12)
+
+        ctk.CTkLabel(edit_inner, text="Zmień czas ćwiczeń:",
+                     font=ctk.CTkFont(size=12, weight="bold"),
+                     text_color=self._get_text_color(main=False)).pack(anchor="w", pady=(0, 8))  # <-- ZMIANA
+
+        time_input_frame = ctk.CTkFrame(edit_inner, fg_color="transparent")
+        time_input_frame.pack(anchor="w")
+
+        self.minutes_entry = ctk.CTkEntry(time_input_frame, width=100, height=36,
+                                          font=ctk.CTkFont(size=14), placeholder_text="0")
+        self.minutes_entry.pack(side="left", padx=(0, 8))
+
+        ctk.CTkLabel(time_input_frame, text="minut",
+                     font=ctk.CTkFont(size=13), text_color=self._get_text_color(main=True)).pack(side="left", padx=(
+        0, 12))  # <-- ZMIANA
+
+        self.save_time_button = ctk.CTkButton(
+            time_input_frame, text="Zapisz", command=self._save_practice_time,
+            width=90, height=36, font=ctk.CTkFont(size=13, weight="bold"),
+            fg_color=self.COLOR_GOAL_MET, hover_color="#229954", corner_radius=18
+        )
+        self.save_time_button.pack(side="left")
+
+    # =========================
+    # Interakcje
+    # =========================
+    def _previous_month(self):
+        self.current_month -= 1
+        if self.current_month < 1:
+            self.current_month = 12
+            self.current_year -= 1
+        self.focused_day = None
+        self.focused_day_frame = None
+        self._render_calendar()
+        self._render_chart()
+        self._update_stats()
+
+    def _next_month(self):
+        self.current_month += 1
+        if self.current_month > 12:
+            self.current_month = 1
+            self.current_year += 1
+        self.focused_day = None
+        self.focused_day_frame = None
+        self._render_calendar()
+        self._render_chart()
+        self._update_stats()
+
     def _on_day_click(self, date_obj, day_frame):
         if self.focused_day_frame is not None and self.focused_day_frame.winfo_exists():
-            is_prev_today = (self.focused_day is not None and self.focused_day.year == self.current_date.year and self.focused_day.month == self.current_date.month and self.focused_day.day == self.current_date.day)
-            if is_prev_today:
-                self.focused_day_frame.configure(border_width=3, border_color="white")
-            else:
-                self.focused_day_frame.configure(border_width=0)
+            is_prev_today = (
+                    self.focused_day is not None and
+                    self.focused_day.year == self.current_date.year and
+                    self.focused_day.month == self.current_date.month and
+                    self.focused_day.day == self.current_date.day
+            )
+
+            # Wyczyść poprzedni fokus
+            if self.focused_day.year == self.current_month and self.focused_day.month == self.current_month:
+                if is_prev_today:
+                    self.focused_day_frame.configure(border_width=2, border_color="white")
+                else:
+                    self.focused_day_frame.configure(border_width=0)
 
         self.focused_day = date_obj
         self.focused_day_frame = day_frame
-        day_frame.configure(border_width=3, border_color="#F39C12")
+        day_frame.configure(border_width=2, border_color=self.COLOR_FOCUS)
         self._show_day_details(date_obj)
 
     def _show_day_details(self, date_obj):
         minutes = self._get_practice_minutes(date_obj)
         week_total = self._get_week_total(date_obj)
 
-        # Format date
         date_str = date_obj.strftime("%d %B %Y")
         day_names_polish = ["Poniedziałek", "Wtorek", "Środa", "Czwartek", "Piątek", "Sobota", "Niedziela"]
         day_name = day_names_polish[date_obj.weekday()]
 
-        # Format practice time
         if minutes > 0:
             hours = minutes // 60
             mins = minutes % 60
-            if hours > 0:
-                time_text = f"{hours}h {mins}m" if mins > 0 else f"{hours}h"
-            else:
-                time_text = f"{mins}m"
+            time_text = f"{hours}h {mins}m" if hours > 0 else f"{mins}m"
         else:
             time_text = "Brak ćwiczeń"
 
-        # Goal status
         if minutes >= self.PRACTICE_GOAL:
             goal_status = "✓ Cel dzienny osiągnięty"
-            goal_color = self.COLOR_GOAL_MET
         else:
-            remaining = self.PRACTICE_GOAL - minutes
+            remaining = max(0, self.PRACTICE_GOAL - minutes)
             goal_status = f"✗ Do celu brakuje: {remaining} min"
-            goal_color = "#E74C3C"
 
-        # Week info
         week_hours = week_total // 60
         week_mins = week_total % 60
-        week_time_text = f"{week_hours}h {week_mins}m" if week_mins > 0 else f"{week_hours}h"
-        week_percentage = int((week_total / self.WEEKLY_GOAL) * 100) if self.WEEKLY_GOAL else 0
+        week_time_text = f"{week_hours}h {week_mins}m" if week_mins > 0 or week_hours > 0 else "0m"
 
+        week_percentage = 0 if week_total <= 0 else int((week_total / self.WEEKLY_GOAL) * 100)
+        week_percentage = max(0, min(week_percentage, 100))
         if week_total >= self.WEEKLY_GOAL:
             week_status = f"✓ Cel tygodniowy osiągnięty ({week_percentage}%)"
         else:
             week_status = f"Postęp tygodniowy: {week_percentage}%"
 
-        # Quiz metrics
-        qm = self._get_quiz_metrics_for_day(date_obj)
-        interval_total = qm["interval_correct"] + qm["interval_wrong"]
-        harmony_total = qm["harmony_correct"] + qm["harmony_wrong"]
-        rhythm_total = qm["rhythm_perfect"] + qm["rhythm_good"] + qm["rhythm_mistake"]
-
-        quiz_lines = []
-        if interval_total > 0:
-            quiz_lines.append(f"- Quiz Interwały: {qm['interval_correct']} ✔ / {qm['interval_wrong']} ✖ (razem {interval_total})")
-        if harmony_total > 0:
-            quiz_lines.append(f"- Quiz Harmonia: {qm['harmony_correct']} ✔ / {qm['harmony_wrong']} ✖ (razem {harmony_total})")
-        if rhythm_total > 0:
-            avg_err_text = f"Śr. błąd: {sum(qm['rhythm_avg_errors'])/len(qm['rhythm_avg_errors']):.0f} ms" if qm["rhythm_avg_errors"] else ""
-            quiz_lines.append(f"- Quiz Rytm: perfect {qm['rhythm_perfect']}, good {qm['rhythm_good']}, mistake {qm['rhythm_mistake']} {avg_err_text}")
-
-        if not quiz_lines:
-            quiz_text = "\nBrak danych o quizach tego dnia."
-        else:
-            quiz_text = "\n" + "\n".join(quiz_lines)
-
-        # Update details text (include quizzes)
         details_text = f"""📅 {day_name}, {date_str}
 
 ⏱️  Czas ćwiczeń: {time_text}
 {goal_status}
 
-📊 Tydzień: {week_time_text} ({week_status})
+📊 Tydzień: {week_time_text} ({week_status})"""
 
-🔎 Wyniki quizów:{quiz_text}
-"""
         self.details_label.configure(text=details_text)
-
-        # Populate the entry with current minutes
-        self.minutes_entry.delete(0, "end")
+        self.minutes_entry.delete(0, 'end')
         self.minutes_entry.insert(0, str(minutes))
 
-        self.details_panel.grid()  # Show panel
+        self.details_panel.grid()  # pokaż panel (ma stałe miejsce w siatce)
 
-    # ----------------- SAVE / UPDATE -----------------
     def _save_practice_time(self):
         if not self.focused_day:
             return
         try:
             minutes = int(self.minutes_entry.get())
-            if minutes < 0:
-                minutes = 0
-            if minutes > 1440:
-                minutes = 1440
-
-            date_str = self.focused_day.strftime("%Y-%m-%d")
-            self.practice_data[date_str] = minutes
+            minutes = max(0, min(1440, minutes))
+            self.practice_data[self.focused_day.strftime("%Y-%m-%d")] = minutes
             self._save_practice_data()
 
+            # Odśwież wszystko, wyczyść cache
             self.week_totals_cache.clear()
             focused_date = self.focused_day
 
             self._render_calendar()
             self._render_chart()
             self._update_stats()
-
-            # Re-show details for the focused day
             self._show_day_details(focused_date)
         except ValueError:
             pass
@@ -755,9 +808,10 @@ class CalendarView(ctk.CTkFrame):
         self.weekly_streak_label.configure(text=f"{weekly_streak}")
         self.week_progress_label.configure(text=f"{week_total}/{self.WEEKLY_GOAL} min ({week_progress}%)")
 
+        progress_value = week_progress / 100.0
+        self.week_progress_bar.set(progress_value)
         progress_color = self.COLOR_GOAL_MET if week_progress >= 100 else self.COLOR_ACCENT
         self.week_progress_bar.configure(progress_color=progress_color)
-        self.week_progress_bar.set(week_progress / 100)
 
     def _go_to_selected_day(self):
         if self.show_day_callback:
@@ -766,25 +820,3 @@ class CalendarView(ctk.CTkFrame):
     def _select_today(self):
         if self.focused_day:
             self._show_day_details(self.focused_day)
-
-    def _previous_month(self):
-        self.current_month -= 1
-        if self.current_month < 1:
-            self.current_month = 12
-            self.current_year -= 1
-        self.focused_day = None
-        self.focused_day_frame = None
-        self.details_panel.grid_remove()
-        self._render_calendar()
-        self._render_chart()
-
-    def _next_month(self):
-        self.current_month += 1
-        if self.current_month > 12:
-            self.current_month = 1
-            self.current_year += 1
-        self.focused_day = None
-        self.focused_day_frame = None
-        self.details_panel.grid_remove()
-        self._render_calendar()
-        self._render_chart()

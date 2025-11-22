@@ -1,230 +1,326 @@
+# theory_view.py – CLICKABLE CARDS + SUN/MOON THEME TOGGLE
 import customtkinter as ctk
-from .interwaly import InterwalyView
-from .akordy import AkordyView
+from typing import Optional, Callable
+import os
+from PIL import Image
+
+# Try to import chapter views
+try:
+    from .interwaly import InterwalyView
+except Exception:
+    InterwalyView = None
+
+try:
+    from .akordy import AkordyView
+except Exception:
+    AkordyView = None
+
+# Default Light mode
+ctk.set_appearance_mode("Light")
+ctk.set_default_color_theme("blue")
 
 
-class TheoryView(ctk.CTkFrame):
-    """Theory menu view styled to match the calendar screen.
-
-    Uses a scrollable layout, decorative header lines and dark panels similar
-    to `calendar.py` so the visual language is consistent across the app.
-    """
-
-    COLOR_HEADER = "#1ABC9C"
-    COLOR_PANEL = "#2c2c2c"
-    COLOR_CARD = "#1e1e1e"
-    # Replaced orange accent with cyan to align with blue/cyan palette
-    COLOR_ACCENT = "#00BCD4"
-
-    def __init__(self, master, back_callback=None, **kwargs):
+class CardButton(ctk.CTkFrame):
+    def __init__(
+        self,
+        master,
+        title: str,
+        description: str,
+        icon_text: str = "🎵",
+        command: Optional[Callable] = None,
+        accent: str = "#00BCD4",
+        **kwargs
+    ):
         super().__init__(master, **kwargs)
-        self.back_callback = back_callback
+        self.command = command
+        self.accent = accent
+        self.default_bg = self._get_bg_color()
+
+        self.configure(
+            fg_color=self.default_bg,
+            corner_radius=20,
+            border_width=0,
+        )
+
         self.columnconfigure(0, weight=1)
-        self.rowconfigure(0, weight=1)
-        self._create_widgets()
 
-    def _create_widgets(self):
-        # Scrollable frame like calendar
-        self.scrollable = ctk.CTkScrollableFrame(self, fg_color="transparent")
-        self.scrollable.grid(row=0, column=0, sticky="nsew", padx=10, pady=10)
-        self.scrollable.columnconfigure(0, weight=1)
+        self.icon_label = ctk.CTkLabel(self, text=icon_text, font=ctk.CTkFont(size=40))
+        self.icon_label.grid(row=0, column=0, pady=(40, 15))
 
-        # Back button at the top
+        self.title_label = ctk.CTkLabel(
+            self,
+            text=title,
+            font=ctk.CTkFont(size=30, weight="bold"),
+            text_color=self._title_color()
+        )
+        self.title_label.grid(row=1, column=0, pady=(0, 6))
+
+        self.desc_label = ctk.CTkLabel(
+            self,
+            text=description,
+            font=ctk.CTkFont(size=13),
+            text_color=self._desc_color(),
+            wraplength=520,
+            justify="center"
+        )
+        self.desc_label.grid(row=2, column=0, padx=18, pady=(0, 40))
+
+        # Bind click + hover to ALL children
+        widgets = [self, self.icon_label, self.title_label, self.desc_label]
+        for w in widgets:
+            w.bind("<Button-1>", lambda e: self._on_click())
+            w.bind("<Enter>", self._on_enter)
+            w.bind("<Leave>", self._on_leave)
+
+    def _get_bg_color(self):
+        return "#ffffff" if ctk.get_appearance_mode() == "Light" else "#1e1e1e"
+
+    def _title_color(self):
+        return "#0b0b0b" if ctk.get_appearance_mode() == "Light" else "#ECF0F1"
+
+    def _desc_color(self):
+        return "#4b4b4b" if ctk.get_appearance_mode() == "Light" else "#95a5a6"
+
+    def _on_enter(self, event=None):
+        self.configure(border_width=2, border_color=self.accent)
+
+    def _on_leave(self, event=None):
+        self.configure(border_width=0)
+
+    def _on_click(self):
+        if callable(self.command):
+            self.command()
+
+
+# ============================================================
+# Main Theory View
+# ============================================================
+class TheoryView(ctk.CTkFrame):
+    HEADER_BG = "#FFFFFF"
+    ACCENT_CYAN = "#25b4b6"
+    ACCENT_GOLD = "#cca839"
+    ACCENT_PURPLE = "#552564"
+    ACCENT_GREEN = "#61be5f"
+    ACCENT_LAVENDER = "#9b75a7"
+    def __init__(self, master, back_callback: Optional[Callable] = None, **kwargs):
+        super().__init__(master, fg_color=self._get_main_bg_color(), **kwargs)
+        self.back_callback = back_callback
+
+        self.columnconfigure(0, weight=1)
+        self.rowconfigure(1, weight=1)
+
+        self.chapter_frame = None
+
+        self._build_header()
+        self._build_main_area()
+
+        self.bind("<Configure>", self._on_resize)
+
+    def _get_main_bg_color(self):
+        return "#f2f2f2" if ctk.get_appearance_mode() == "Light" else "#1a1a1a"
+
+    def _get_subtitle_color(self):
+        return self.ACCENT_GREEN if ctk.get_appearance_mode() == "Light" else "#b2b2b2"
+
+    # ============================================================
+    # Header
+    # ============================================================
+    def _build_header(self):
+        self.header = ctk.CTkFrame(self, fg_color=self.HEADER_BG, height=72, corner_radius=12)
+        self.header.grid(row=0, column=0, sticky="ew", padx=10, pady=(20, 10))
+        self.header.grid_propagate(False)
+        self.header.columnconfigure(1, weight=1)
+        self.header.rowconfigure(0, weight=1)
+
+        # App icon and Back button
+        left = ctk.CTkFrame(self.header, fg_color="transparent")
+        left.grid(row=0, column=0, sticky="w", padx=(18, 10))
+
+        # App icon
+        icon_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "assets", "icon.png")
+
+
+        if os.path.exists(icon_path):
+            app_icon = ctk.CTkImage(light_image=Image.open(icon_path), size=(60, 65))
+            ctk.CTkLabel(
+                left, image=app_icon, text=""
+            ).pack(side="left", anchor="center")
+
         if self.back_callback:
-            back_btn = ctk.CTkButton(
-                self.scrollable,
-                text="← Powrót",
-                command=self.back_callback,
-                width=130,
-                height=40,
-                fg_color="#555555",
-                hover_color="#777777",
-                font=("Arial", 14)
-            )
-            back_btn.grid(row=0, column=0, pady=(10, 0), sticky="w", padx=40)
+            ctk.CTkButton(
+                left, text="←", width=44, height=44,
+                fg_color=self.ACCENT_LAVENDER, hover_color=self.ACCENT_PURPLE,
+                command=self.back_callback, corner_radius=12
+            ).pack(side="left", anchor="center", padx=(10, 0))
 
-        # Title directly on scrollable (no wrapper frame)
-        ctk.CTkLabel(
-            self.scrollable,
-            text="Teoria Muzyki",
-            font=("Arial", 36, "bold"),
-            text_color=self.COLOR_HEADER
-        ).grid(row=1, column=0, pady=(20, 20), sticky="w", padx=40)
+        # Title
+        title = ctk.CTkLabel(
+            self.header, text="Teoria",
+            font=ctk.CTkFont(size=40, weight="bold"), text_color=self.ACCENT_CYAN
+        )
+        title.grid(row=0, column=1)
 
-        # Removed decorative subtitle lines and label per request
+        # Right utility bar
+        right = ctk.CTkFrame(self.header, fg_color="transparent")
+        right.grid(row=0, column=2, sticky="e", padx=(10, 18))
 
-        # Cards frame directly on scrollable
-        cards_frame = ctk.CTkFrame(self.scrollable, fg_color="transparent")
-        cards_frame.grid(row=2, column=0, sticky="ew", padx=40, pady=(0, 20))
-        cards_frame.columnconfigure(0, weight=1)
-        cards_frame.columnconfigure(1, weight=1)
+        # --- NEW: SUN/MOON TOGGLE ---
+        self.theme_icon = ctk.CTkButton(
+            right,
+            width=44, height=44,
+            fg_color=self.ACCENT_GOLD,
+            hover_color=self.ACCENT_CYAN,
+            text="🌞",
+            command=self._toggle_theme,
+            corner_radius=12,
+            font=ctk.CTkFont(size=22),
+        )
+        self.theme_icon.pack(side="right", anchor="center")
 
-        # Interwały card
-        interval_card = ctk.CTkFrame(cards_frame, fg_color=self.COLOR_PANEL, corner_radius=15)
-        interval_card.grid(row=0, column=0, sticky="nsew", padx=(0, 10), pady=10)
-        interval_card.columnconfigure(0, weight=1)
+    # Theme toggle logic
+    def _toggle_theme(self):
+        if ctk.get_appearance_mode() == "Light":
+            ctk.set_appearance_mode("Dark")
+            self.theme_icon.configure(text="🌙")
+        else:
+            ctk.set_appearance_mode("Light")
+            self.theme_icon.configure(text="🌞")
 
-        ctk.CTkLabel(
-            interval_card,
-            text="🎵",
-            font=ctk.CTkFont(size=28)
-        ).pack(pady=(18, 6))
+        self.configure(fg_color=self._get_main_bg_color())
+        self.subtitle.configure(text_color=self._get_subtitle_color())
+        self._rebuild_cards()
 
-        ctk.CTkLabel(
-            interval_card,
-            text="Interwały",
-            font=("Arial", 18, "bold"),
-            text_color="#ECF0F1"
-        ).pack()
+    # ============================================================
+    # Main area
+    # ============================================================
+    def _build_main_area(self):
+        self.main = ctk.CTkFrame(self, fg_color="transparent")
+        self.main.grid(row=1, column=0, sticky="nsew", padx=10, pady=(6, 12))
+        self.main.columnconfigure(0, weight=1)
+        self.main.rowconfigure(1, weight=3)
+        self.main.rowconfigure(2, weight=1)
 
-        ctk.CTkLabel(
-            interval_card,
-            text="Podstawy interwałów — definicje i przykłady.",
-            font=("Arial", 12),
-            text_color="#95a5a6",
-            wraplength=400
-        ).pack(padx=12, pady=(6, 12))
+        self.subtitle = ctk.CTkLabel(
+            self.main,
+            text="Wybierz temat aby rozpocząć naukę",
+            font=ctk.CTkFont(size=14),
+            text_color=self._get_subtitle_color()
+        )
+        self.subtitle.grid(row=0, column=0, sticky="w", padx=28, pady=(12, 18))
 
-        ctk.CTkButton(
-            interval_card,
-            text="Otwórz",
-            command=lambda: self._show_chapter("Interwały"),
-            width=140,
-            height=40,
-            fg_color=self.COLOR_HEADER,
-            hover_color="#16A085",
-            corner_radius=10
-        ).pack(pady=(0, 18))
+        self.cards_container = ctk.CTkFrame(self.main, fg_color="transparent")
+        self.cards_container.grid(row=1, column=0, sticky="nsew", padx=28, pady=(0, 20))
+        self.cards_container.columnconfigure(0, weight=1)
+        self.cards_container.columnconfigure(1, weight=1)
+        self.cards_container.rowconfigure(0, weight=1)
 
-        # Akordy card
-        chords_card = ctk.CTkFrame(cards_frame, fg_color=self.COLOR_PANEL, corner_radius=15)
-        chords_card.grid(row=0, column=1, sticky="nsew", padx=(10, 0), pady=10)
-        chords_card.columnconfigure(0, weight=1)
+        # Two main cards
+        self.interval_card = CardButton(
+            self.cards_container,
+            title="Interwały",
+            description="Poznaj odległości między dźwiękami.",
+            icon_text="🎼",
+            command=lambda: self._open_chapter("intervals"),
+            accent=self.ACCENT_CYAN,
+        )
 
-        ctk.CTkLabel(
-            chords_card,
-            text="🎹",
-            font=ctk.CTkFont(size=28)
-        ).pack(pady=(18, 6))
+        self.chords_card = CardButton(
+            self.cards_container,
+            title="Akordy",
+            description="Budowa i teoria akordów.",
+            icon_text="🎹",
+            command=lambda: self._open_chapter("chords"),
+            accent=self.ACCENT_PURPLE,
+        )
 
-        ctk.CTkLabel(
-            chords_card,
-            text="Akordy",
-            font=("Arial", 18, "bold"),
-            text_color="#ECF0F1"
-        ).pack()
+        self.interval_card.grid(row=0, column=0, sticky="nsew", padx=(0, 12), pady=10)
+        self.chords_card.grid(row=0, column=1, sticky="nsew", padx=(12, 0), pady=10)
 
-        ctk.CTkLabel(
-            chords_card,
-            text="Wprowadzenie do akordów i ich budowy.",
-            font=("Arial", 12),
-            text_color="#95a5a6",
-            wraplength=400
-        ).pack(padx=12, pady=(6, 12))
+        self._current_columns = 2
 
-        ctk.CTkButton(
-            chords_card,
-            text="Otwórz",
-            command=lambda: self._show_chapter("Akordy"),
-            width=140,
-            height=40,
-            fg_color="#8E44AD",
-            hover_color="#7d3c98",
-            corner_radius=10
-        ).pack(pady=(0, 18))
+    # ============================================================
+    # Responsive layout
+    # ============================================================
+    def _on_resize(self, event):
+        width = self.winfo_width()
+        target = 1 if width < 720 else 2
 
-        # Hidden chapter frame (fills same area when opened)
-        self.chapter_frame = ctk.CTkFrame(self.scrollable, fg_color="transparent")
+        if target != self._current_columns:
+            self._current_columns = target
 
-    def _show_chapter(self, chapter_name: str):
-        """Show a chapter view."""
-        # Hide main scrollable content (all non-chapter-frame children)
-        for child in self.scrollable.winfo_children():
-            if child is not self.chapter_frame:
-                child.grid_forget()
+            self.interval_card.grid_forget()
+            self.chords_card.grid_forget()
 
-        # Clear chapter frame
+            if target == 1:
+                self.cards_container.columnconfigure(1, weight=0)
+                self.interval_card.grid(row=0, column=0, sticky="ew", pady=8)
+                self.chords_card.grid(row=1, column=0, sticky="ew", pady=8)
+            else:
+                self.cards_container.columnconfigure(1, weight=1)
+                self.interval_card.grid(row=0, column=0, sticky="nsew", padx=(0, 12), pady=10)
+                self.chords_card.grid(row=0, column=1, sticky="nsew", padx=(12, 0), pady=10)
+
+    # ============================================================
+    # Opening chapters
+    # ============================================================
+    def _open_chapter(self, key: str):
+        self.main.grid_remove()
+
+        if not self.chapter_frame:
+            self.chapter_frame = ctk.CTkScrollableFrame(self, fg_color="transparent")
+            self.chapter_frame.grid(row=1, column=0, sticky="nsew", padx=10, pady=(6, 12))
+            self.chapter_frame.columnconfigure(0, weight=1)
+
         for w in self.chapter_frame.winfo_children():
             w.destroy()
 
-        # If Interwały is requested, embed the dedicated InterwalyView directly with full control
-        if chapter_name == "Interwały":
-            iv = InterwalyView(self.chapter_frame, on_back=self._back_to_menu)
-            iv.pack(fill="both", expand=True)
-            self.chapter_frame.grid(row=4, column=0, sticky="nsew")
+        if key == "intervals" and InterwalyView:
+            InterwalyView(self.chapter_frame, on_back=self._close_chapter).pack(fill="both", expand=True)
             return
 
-        # If Akordy is requested, embed the dedicated AkordyView directly with full control
-        if chapter_name == "Akordy":
-            av = AkordyView(self.chapter_frame, on_back=self._back_to_menu)
-            av.pack(fill="both", expand=True)
-            self.chapter_frame.grid(row=4, column=0, sticky="nsew")
+        if key == "chords" and AkordyView:
+            AkordyView(self.chapter_frame, on_back=self._close_chapter).pack(fill="both", expand=True)
             return
 
-        # Build chapter header with decorative lines (only for placeholder chapters)
-        header = ctk.CTkFrame(self.chapter_frame, fg_color="transparent")
-        header.pack(fill="x", pady=(10, 10), padx=40)
-        header.columnconfigure(1, weight=1)
-
         ctk.CTkLabel(
-            header,
-            text="━━━",
-            font=ctk.CTkFont(size=14),
-            text_color=self.COLOR_ACCENT
-        ).grid(row=0, column=0, padx=(0, 10))
-
-        ctk.CTkLabel(
-            header,
-            text=chapter_name,
+            self.chapter_frame,
+            text="Moduł w przygotowaniu",
             font=ctk.CTkFont(size=20, weight="bold"),
-            text_color=self.COLOR_HEADER
-        ).grid(row=0, column=1, sticky="w")
+        ).pack(pady=30)
 
-        ctk.CTkLabel(
-            header,
-            text="━━━",
-            font=ctk.CTkFont(size=14),
-            text_color=self.COLOR_ACCENT
-        ).grid(row=0, column=2, padx=(10, 0))
-
-        # Placeholder content for other chapters (no wrapping panel)
-        body = ctk.CTkLabel(
+        ctk.CTkButton(
             self.chapter_frame,
-            text=("Tutaj znajdą się materiały do nauki dotyczące wybranego rozdziału.\n\n"
-                  "To jest widok tymczasowy — dodaj konkretne treści później."),
-            font=("Arial", 13),
-            text_color="#ECF0F1",
-            wraplength=800,
-            justify="left",
-        )
-        body.pack(padx=40, pady=20)
+            text="← Wróć",
+            command=self._close_chapter,
+            width=140,
+        ).pack()
 
-        # Back button
-        back_btn = ctk.CTkButton(
-            self.chapter_frame,
-            text="← Wróć do rozdziałów",
-            command=self._back_to_menu,
-            width=200,
-            height=40,
-            fg_color="#555555",
-            hover_color="#777777",
-            font=("Arial", 12)
-        )
-        back_btn.pack(pady=(0, 24))
+    def _close_chapter(self):
+        if self.chapter_frame:
+            for w in self.chapter_frame.winfo_children():
+                w.destroy()
+            self.chapter_frame.grid_forget()
+            self.chapter_frame = None
 
-        # Pack chapter frame (place under cards)
-        self.chapter_frame.grid(row=4, column=0, sticky="nsew")
+        self.main.grid()
+        self._rebuild_cards()
 
-    def _back_to_menu(self):
-        """Return to the theory menu from a chapter."""
-        # Destroy chapter frame children and hide it
-        for w in self.chapter_frame.winfo_children():
-            w.destroy()
-        self.chapter_frame.grid_forget()
+    # Rebuild cards after theme change
+    def _rebuild_cards(self):
+        for card in (self.interval_card, self.chords_card):
+            card.configure(fg_color=card._get_bg_color())
+            card.title_label.configure(text_color=card._title_color())
+            card.desc_label.configure(text_color=card._desc_color())
 
-        # Recreate the whole view to restore layout
-        for child in self.scrollable.winfo_children():
-            child.destroy()
 
-        self._create_widgets()
+# Preview window
+if __name__ == "__main__":
+    import tkinter as tk
+    root = tk.Tk()
+    root.title("TheoryView Preview")
+    root.geometry("1100x700")
 
+    tv = TheoryView(root, back_callback=root.destroy)
+    tv.pack(fill="both", expand=True)
+
+    root.mainloop()
