@@ -6,6 +6,7 @@ from .quiz import QuizView
 from .metronome import MetronomeView
 from .chord_finder import ChordFinderView
 from .songbook import SongbookView
+from .sidebar import Sidebar
 import os
 from PIL import Image
 from datetime import datetime
@@ -36,7 +37,7 @@ class MainScreen:
         "Quizy": {"View": QuizView, "Icon": "quiz", "Color": COLOR_LIGHT_GREEN, "Emoji": "🧠"},
         "Teoria": {"View": TheoryView, "Icon": "theory", "Color": ACCENT_CYAN, "Emoji": "📚"},
         "Metronom": {"View": MetronomeView, "Icon": "metronome", "Color": ACCENT_GOLD, "Emoji": "⏱️"},
-        "Tetekror": {"View": ChordFinderView, "Icon": "search", "Color": ACCENT_PURPLE, "Emoji": "🔎"},
+        "Detektor": {"View": ChordFinderView, "Icon": "search", "Color": ACCENT_PURPLE, "Emoji": "🔎"},
         "Śpiewnik": {"View": SongbookView, "Icon": "theory", "Color": COLOR_RED, "Emoji": "📖"},
         "Kalendarz": {"View": CalendarView, "Icon": "calendar", "Color": ACCENT_CYAN, "Emoji": "📅"},
     }
@@ -46,7 +47,7 @@ class MainScreen:
         "Quizy",
         "Teoria",
         "Metronom",
-        "Tetekror",
+        "Detektor",
         "Śpiewnik"
     ]
 
@@ -61,6 +62,13 @@ class MainScreen:
         self.container = ctk.CTkFrame(master, fg_color=self._get_main_bg_color())
         self.container.pack(fill="both", expand=True)
 
+        self.sidebar = Sidebar(
+            master=self.master,
+            modules=self.MODULES,
+            show_module_callback=self._show_module,
+            show_menu_callback=self.show_menu,
+            header_height=100)
+
         self.current_view_frame: Optional[ctk.CTkFrame] = None
         self.current_view_object = None
         self.stats = {}
@@ -68,6 +76,7 @@ class MainScreen:
 
         self._get_day_view_stats()
         self._create_menu_frame()
+
 
     # --- Narzędzia ---
 
@@ -124,33 +133,33 @@ class MainScreen:
     # --- Elementy UI Menu Głównego ---
     # ... (metody _create_header_bar, _get_theme_icon, _create_menu_frame bez zmian) ...
     def _create_header_bar(self, master_frame: ctk.CTkFrame):
-        """Tworzy pasek nagłówka jako część ramki menu, identyczny z TheoryView, ale bez 'Wróć'."""
-
-        # WYMIARY Paska zgodnie z TheoryView
         self.header = ctk.CTkFrame(master_frame, fg_color=self.HEADER_BG, height=72, corner_radius=12)
         self.header.pack(fill="x", side="top", padx=10, pady=(20, 10))
         self.header.grid_propagate(False)
         self.header.columnconfigure(1, weight=1)
         self.header.rowconfigure(0, weight=1)
 
-        # --- LEWA STRONA: IKONA APLIKACJI I TYTUŁ ---
         left = ctk.CTkFrame(self.header, fg_color="transparent")
         left.grid(row=0, column=0, sticky="w", padx=(18, 10))
 
         icon_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "assets", "icon.png")
         if os.path.exists(icon_path):
-            app_icon = ctk.CTkImage(light_image=Image.open(icon_path), size=(60, 65))
-            ctk.CTkLabel(
-                left, image=app_icon, text=""
-            ).pack(side="left", anchor="center")
+            self.app_icon = ctk.CTkImage(light_image=Image.open(icon_path), size=(60, 65))
+            self.menu_button = ctk.CTkButton(
+                left,
+                image=self.app_icon,
+                text="",
+                width=60,
+                height=65,
+                fg_color="transparent",
+                command=self.sidebar.toggle
+            )
+            self.menu_button.pack(side="left", anchor="center")
 
-        # Tytuł
         title_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "assets", "name.png")
-        if os.path.exists(icon_path):
-            title_icon = ctk.CTkImage(light_image=Image.open(title_path), size=(160, 40))
-            ctk.CTkLabel(
-                left, image=title_icon, text=""
-            ).pack(side="left", anchor="center", padx=(50, 18))
+        if os.path.exists(title_path):
+            self.title_icon = ctk.CTkImage(light_image=Image.open(title_path), size=(160, 40))
+            ctk.CTkLabel(left, image=self.title_icon, text="").pack(side="left", anchor="center", padx=(50, 18))
 
         # --- PRAWA STRONA: PRZEŁĄCZNIK MOTYWU I WYJDŹ ---
         right = ctk.CTkFrame(self.header, fg_color="transparent")
@@ -211,8 +220,59 @@ class MainScreen:
         self.buttons_frame.grid(row=1, column=0, sticky="nsew", padx=10, pady=(15, 0))
         self._create_module_buttons()
 
-    # ... (metody _create_menu_frame bez zmian) ...
 
+    def _create_sidebar(self):
+        if self.sidebar and self.sidebar.winfo_exists():
+            return
+
+        header_height = 100  # wysokość nagłówka
+        self.sidebar = ctk.CTkFrame(
+            self.master,
+            fg_color="white",  # białe tło
+            width=250
+        )
+        # rozciągnięcie na cały ekran w dół, ale start poniżej headera
+        self.sidebar.place(x=-250, y=header_height, relheight=1)
+
+        for name, data in self.MODULES.items():
+            btn = ctk.CTkButton(
+                self.sidebar,
+                text=f"{data.get('Emoji', '')} {name}",
+                fg_color="white",  # tło zawsze białe
+                text_color="black",
+                corner_radius=0,
+                border_width=2,
+                border_color="white",  # brak obramowania na start
+                command=lambda k=name: self._sidebar_action(k)
+            )
+            btn.pack(fill="x", padx=10, pady=5)
+
+            # efekt hover: zmiana obramowania
+            btn.bind("<Enter>", lambda e, b=btn: b.configure(border_color=data["Color"]))
+            btn.bind("<Leave>", lambda e, b=btn: b.configure(border_color="white"))
+
+    def _toggle_sidebar(self):
+        header_height = 100
+        if not self.sidebar or not self.sidebar.winfo_exists():
+            self._create_sidebar()
+
+        if self.sidebar.winfo_x() >= 0:
+            # schowaj
+            self.sidebar.place(x=-250, y=header_height, relheight=1)
+        else:
+            # pokaż
+            self.sidebar.place(x=0, y=header_height, relheight=1)
+
+    def _sidebar_action(self, module_name: str):
+        """Obsługa kliknięcia w przycisk sidebaru."""
+        if module_name == "Menu":
+            # wróć do głównego menu
+            self.show_menu()
+        else:
+            # pokaż wybrany moduł
+            self._show_module(module_name)
+        # schowaj sidebar po kliknięciu
+        self._toggle_sidebar()
     def _create_summary_panel(self, master_frame: ctk.CTkFrame):
         """Tworzy klikalny panel podsumowania z postępem tygodniowym i dziennym. Tło: CYJAN. Tekst: BIAŁY."""
 
@@ -343,7 +403,6 @@ class MainScreen:
             self.current_view_object = None
 
     def _create_module_frame(self, ViewClass: Type, **kwargs) -> Tuple[ctk.CTkFrame, object]:
-        """Tworzy ramkę dla nowego widoku i jego instancję z odpowiednimi callbackami."""
         frame = ctk.CTkFrame(self.container, fg_color=self._get_main_bg_color())
 
         callbacks = {
@@ -356,8 +415,7 @@ class MainScreen:
         all_args = {**kwargs, **callbacks}
         view_args = all_args.copy()
 
-        # --- FILTROWANIE ARGUMENTÓW ---
-
+        # --- filtrowanie argumentów dla różnych widoków ---
         if ViewClass == DayView:
             view_args.pop("back_callback", None)
             view_args.pop("show_day_callback", None)
@@ -380,7 +438,8 @@ class MainScreen:
             view_args.pop("back_to_calendar_callback", None)
             view_args.pop("show_day_callback", None)
 
-        view_instance = ViewClass(frame, **view_args)
+        # <<< tutaj tworzysz instancję widoku
+        view_instance = ViewClass(frame, sidebar=self.sidebar, **view_args)
         view_instance.pack(fill="both", expand=True)
         return frame, view_instance
 
@@ -416,23 +475,23 @@ class MainScreen:
         if hasattr(self, 'theme_icon_button'):
             self.theme_icon_button.configure(text=self._get_theme_icon())
 
-            # 2. Odśwież statystyki i usuń starą zawartość
+        # 2. Odśwież statystyki
         self._get_day_view_stats()
 
+        # 3. Usuń starą zawartość i przebuduj menu
         if self.content_frame:
-            # Usuń starą zawartość przed ponownym rysowaniem
             for widget in self.content_frame.winfo_children():
                 widget.destroy()
 
-            # 3. PONOWNE RYSOWANIE ZAWARTOŚCI MENU
             self._create_summary_panel(self.content_frame)
             self.buttons_frame = ctk.CTkFrame(self.content_frame, fg_color="transparent")
             self.buttons_frame.grid(row=1, column=0, sticky="nsew", padx=10, pady=(15, 0))
             self._create_module_buttons()
 
-        # 4. Pokaż menu
+        # 4. Ukryj aktualny widok i pokaż menu
         self._hide_current_view()
-        self.menu_frame.pack(fill="both", expand=True)
+        if self.menu_frame:
+            self.menu_frame.pack(fill="both", expand=True)
 
     def _toggle_theme(self):
         """Przełącza motyw i wymusza odświeżenie UI."""
@@ -443,4 +502,31 @@ class MainScreen:
             ctk.set_appearance_mode("Light")
             self.current_theme = "Light"
 
+        # Po zmianie motywu odśwież menu
         self.show_menu()
+
+    def _toggle_theme(self):
+        """Przełącza motyw i odświeża tylko kolory."""
+        if ctk.get_appearance_mode() == "Light":
+            ctk.set_appearance_mode("Dark")
+            self.current_theme = "Dark"
+        else:
+            ctk.set_appearance_mode("Light")
+            self.current_theme = "Light"
+
+        # NIE wywołuj show_menu tutaj!
+        # Odśwież tylko kolory istniejących ramek
+        self._refresh_colors()
+    def _refresh_colors(self):
+        """Aktualizuje kolory wszystkich głównych ramek i przycisków."""
+        main_bg = self._get_main_bg_color()
+        self.container.configure(fg_color=main_bg)
+
+        if self.menu_frame:
+            self.menu_frame.configure(fg_color=main_bg)
+
+        if self.content_frame:
+            self.content_frame.configure(fg_color=main_bg)
+
+        if hasattr(self, 'theme_icon_button'):
+            self.theme_icon_button.configure(text=self._get_theme_icon())

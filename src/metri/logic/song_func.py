@@ -42,12 +42,15 @@ def filter_songs(search_args):
                 search_term in song.get('artist', '').lower() or
                 search_term in song.get('group', '').lower())
         ]
-    
+
     if 'language' in search_args and search_args['language']:
-        language = search_args['language'].lower()
+        # Zmienna language przechowuje język wybrany z filtra, np. "polski"
+        language_filter = search_args['language'].lower()
+
         filtered_songs = [
             song for song in filtered_songs
-            if language in song.get('language', '').lower()
+            # POPRAWKA: Użycie == zamiast in dla dokładnego dopasowania
+            if song.get('language', '').lower() == language_filter
         ]
     
     if 'tags' in search_args and search_args['tags']:

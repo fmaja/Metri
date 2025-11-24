@@ -102,9 +102,13 @@ class TheoryView(ctk.CTkFrame):
     ACCENT_PURPLE = "#552564"
     ACCENT_GREEN = "#61be5f"
     ACCENT_LAVENDER = "#9b75a7"
-    def __init__(self, master, back_callback: Optional[Callable] = None, **kwargs):
+
+    def __init__(self, master, sidebar=None, back_callback=None, show_module_callback=None, show_menu_callback=None, **kwargs):
         super().__init__(master, fg_color=self._get_main_bg_color(), **kwargs)
+        self.sidebar = sidebar
         self.back_callback = back_callback
+        self._show_module = show_module_callback
+        self.show_menu = show_menu_callback
 
         self.columnconfigure(0, weight=1)
         self.rowconfigure(1, weight=1)
@@ -141,11 +145,17 @@ class TheoryView(ctk.CTkFrame):
 
 
         if os.path.exists(icon_path):
-            app_icon = ctk.CTkImage(light_image=Image.open(icon_path), size=(60, 65))
-            ctk.CTkLabel(
-                left, image=app_icon, text=""
-            ).pack(side="left", anchor="center")
-
+            self.app_icon = ctk.CTkImage(light_image=Image.open(icon_path), size=(60, 65))
+            self.menu_button = ctk.CTkButton(
+                left,
+                image=self.app_icon,
+                text="",
+                width=60,
+                height=65,
+                fg_color="transparent",
+                command=self.sidebar.toggle  # <<< zawsze ten sam sidebar
+            )
+            self.menu_button.pack(side="left", anchor="center")
         if self.back_callback:
             ctk.CTkButton(
                 left, text="←", width=44, height=44,

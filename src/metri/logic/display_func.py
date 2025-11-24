@@ -127,10 +127,10 @@ def get_display_2(song_id):
     return ['\n'.join(lyrics_output).strip(), '\n'.join(chords_output).rstrip()]
 
 
-def get_display(song_id, transp = 0):
+def get_display(song_id, transp=0):
     song = get_song(song_id)
     display = ''
-    
+
     lyrics = song['lyrics']
     chords = song['chords']
     content = song['content']
@@ -138,53 +138,58 @@ def get_display(song_id, transp = 0):
 
     for section in content:
         chord_counter = -1
-        match section[0]:
-            case 'i':
-                for line in lyrics[section]:                                #assign next chord line from current section
-                    line = transpose(line, key, transp)                     #transpose chord line
-                    #line = re.sub(r'([^\s]+)', r'<code>\1</code>', line)    #wrap each chord in <code> tags
-                    display += '\n'+ f"<b>{line}</b>"                          #add line to display
 
-            case 's':
-                song_name = song.get('title', 'song')
-                section_match = re.search(r'\d+', section)
-                section_number = section_match.group(0) if section_match else '0'
-                song_name = song_name.lower().replace(' ', '_')
-                image_filename = f'static/tab/{song_name}_{section_number}.svg'
-                display += f'\n<img src="{image_filename}" alt="missing tab">'
+        if section[0] == 'i':  # interlude / chord lines
+            for line in lyrics.get(section, []):  # assign next chord line from current section
+                line = transpose(line, key, transp)  # transpose chord line
+                # line = re.sub(r'([^\s]+)', r'<code>\1</code>', line)  # optional wrapping
+                display += '\n' + f"<b>{line}</b>"  # add line to display
 
-            case 'v' | 'c':
-                for i in range(len(lyrics[section])):
-                    lyrics_line = lyrics[section][i]
+        elif section[0] == 's':  # section with image / tab
+            song_name = song.get('title', 'song')
+            section_match = re.search(r'\d+', section)
+            section_number = section_match.group(0) if section_match else '0'
+            song_name = song_name.lower().replace(' ', '_')
+            image_filename = f'static/tab/{song_name}_{section_number}.svg'
+            display += f'\n<img src="{image_filename}" alt="missing tab">'
 
-                    if lyrics_line == ''  or lyrics_line[0] == '!': #skip empty lines
-                        display += '\n'
+        elif section[0] in ['v', 'c']:  # verse / chorus
+            for i in range(len(lyrics.get(section, []))):
+                lyrics_line = lyrics[section][i]
 
-                    elif lyrics_line[0] == '(': #skip 2nd voice
-                        lyrics_line = lyrics_line.replace('|', '')
-                        display += '\n'  + f"<i>{lyrics_line}</i>"
-                    
-                    else:
-                        if not section in chords:   #if section not in chords use base section
-                            section = section.rstrip('0123456789')
-                        if section in chords and len(chords[section]) > 0:
-                            if chord_counter < len(chords[section]) - 1: #if all chords have been used, start over
-                                chord_counter += 1
+                if lyrics_line == '' or lyrics_line[0] == '!':  # skip empty lines
+                    display += '\n'
 
-                            chord_line = chords[section][chord_counter]
-                            chord_line = transpose(chord_line, song['key'], transp)
-                            chord_line = chords_to_scheme(chord_line, lyrics_line)
-                            chord_line = re.sub(r'([^\s]+)', r'<code>\1</code>', chord_line)
-                            if section[0] == 'c':
-                                display += '\n' + f"<b>\t{chord_line}</b>"
-                            else:
-                                display += '\n' + f"<b>{chord_line}</b>"
-                        
+                elif lyrics_line[0] == '(':  # skip 2nd voice
+                    lyrics_line = lyrics_line.replace('|', '')
+                    display += '\n' + f"<i>{lyrics_line}</i>"
+
+                else:
+                    section_base = section
+                    if section_base not in chords:  # if section not in chords use base section
+                        section_base = section_base.rstrip('0123456789')
+
+                    if section_base in chords and len(chords[section_base]) > 0:
+                        if chord_counter < len(chords[section_base]) - 1:  # if all chords used, start over
+                            chord_counter += 1
+
+                        chord_line = chords[section_base][chord_counter]
+                        chord_line = transpose(chord_line, key, transp)
+                        chord_line = chords_to_scheme(chord_line, lyrics_line)
+                        chord_line = re.sub(r'([^\s]+)', r'<code>\1</code>', chord_line)
+
                         if section[0] == 'c':
-                            display += '\n' + '\t' + lyrics_line.replace('|', '')
+                            display += '\n' + f"<b>\t{chord_line}</b>"
                         else:
-                            display += '\n' + lyrics_line.replace('|', '')
+                            display += '\n' + f"<b>{chord_line}</b>"
+
+                    if section[0] == 'c':
+                        display += '\n' + '\t' + lyrics_line.replace('|', '')
+                    else:
+                        display += '\n' + lyrics_line.replace('|', '')
+
         display += "\n"
+
     return display.strip()
 
 def chords_to_scheme(chord_line, lyrics_line):

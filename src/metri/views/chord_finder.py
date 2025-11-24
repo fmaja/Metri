@@ -97,11 +97,18 @@ class ChordFinderView(ctk.CTkFrame):
     # Nowa stała dla koloru tekstu nut na gryfie gitary (ciemny)
     GUITAR_FRET_TEXT_COLOR = "#333333"
 
-    def __init__(self, master, back_callback: Optional[Callable] = None):
+    def __init__(self, master,
+                 back_callback=None,
+                 show_module_callback=None,
+                 show_menu_callback=None,
+                 sidebar=None):
         super().__init__(master)
         self.configure(fg_color=self._get_main_bg_color())
 
         self.back_callback = back_callback
+        self._show_module = show_module_callback
+        self.show_menu = show_menu_callback
+        self.sidebar = sidebar
 
         # State
         self.selected_pitches: List[int] = []
@@ -197,8 +204,17 @@ class ChordFinderView(ctk.CTkFrame):
         icon_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "assets", "icon.png")
 
         if os.path.exists(icon_path):
-            app_icon = ctk.CTkImage(light_image=Image.open(icon_path), size=(60, 65))
-            ctk.CTkLabel(left, image=app_icon, text="").pack(side="left", anchor="center")
+            self.app_icon = ctk.CTkImage(light_image=Image.open(icon_path), size=(60, 65))
+            self.menu_button = ctk.CTkButton(
+                left,
+                image=self.app_icon,
+                text="",
+                width=60,
+                height=65,
+                fg_color="transparent",
+                command=self.sidebar.toggle  # <<< globalny sidebar
+            )
+            self.menu_button.pack(side="left", anchor="center")
 
         ctk.CTkButton(
             left, text="←", width=44, height=44,

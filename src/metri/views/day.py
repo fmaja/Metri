@@ -31,7 +31,7 @@ class DayView(ctk.CTkFrame):
 
     CHECKPOINT_INTERVAL = 60  # Save every 60 seconds (1 minute)
 
-    def __init__(self, master, back_to_menu_callback: Optional[Callable] = None,
+    def __init__(self, master, sidebar=None, back_callback=None, show_module_callback=None, show_menu_callback=None,  back_to_menu_callback: Optional[Callable] = None,
                  back_to_calendar_callback: Optional[Callable] = None, selected_date: Optional[datetime] = None,
                  **kwargs):  # <-- UŻYCIE TYPOWANIA
         super().__init__(master, **kwargs)
@@ -42,6 +42,10 @@ class DayView(ctk.CTkFrame):
         # Callbacks
         self.back_to_menu_callback = back_to_menu_callback
         self.back_to_calendar_callback = back_to_calendar_callback
+        self.sidebar = sidebar
+        self.back_callback = back_callback
+        self._show_module = show_module_callback
+        self.show_menu = show_menu_callback
 
         # Current date (today or selected date)
         self.current_date = selected_date if selected_date else datetime.now()
@@ -102,6 +106,7 @@ class DayView(ctk.CTkFrame):
 
         # Start update loop
         self._update_timer()
+
 
     # --- METODY POMOCNICZE DLA KOLORYSTYKI (NOWE) ---
     def _get_main_bg_color(self):
@@ -269,8 +274,17 @@ class DayView(ctk.CTkFrame):
         # Poprawiona ścieżka do ikony
         icon_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "assets", "icon.png")
         if os.path.exists(icon_path):
-            app_icon = ctk.CTkImage(light_image=Image.open(icon_path), size=(60, 65))
-            ctk.CTkLabel(left, image=app_icon, text="").pack(side="left", anchor="center")
+            self.app_icon = ctk.CTkImage(light_image=Image.open(icon_path), size=(60, 65))
+            self.menu_button = ctk.CTkButton(
+                left,
+                image=self.app_icon,
+                text="",
+                width=60,
+                height=65,
+                fg_color="transparent",
+                command=self.sidebar.toggle  # <<< zawsze ten sam sidebar
+            )
+            self.menu_button.pack(side="left", anchor="center")
 
         btn_menu = ctk.CTkButton(
             left, text="←", width=44, height=44,
@@ -727,20 +741,20 @@ class DayView(ctk.CTkFrame):
 
     def _update_stats(self):
         """Update all statistics displays."""
-        # Update streaks
         daily_streak = self._calculate_daily_streak()
         weekly_streak = self._calculate_weekly_streak()
 
-        self.daily_streak_label.configure(text=f"{daily_streak}")
-        self.weekly_streak_label.configure(text=f"{weekly_streak}")
+        if hasattr(self, "daily_streak_label"):
+            self.daily_streak_label.configure(text=f"{daily_streak}")
+        if hasattr(self, "weekly_streak_label"):
+            self.weekly_streak_label.configure(text=f"{weekly_streak}")
 
-        # Update progress bar and text
-        percentage, week_total = self._get_current_week_progress()
-        progress_color = self.COLOR_GOAL_MET if percentage >= 100 else self.COLOR_ACCENT
-
-        self.progress_bar.configure(progress_color=progress_color)
-        self.progress_bar.set(percentage / 100)
-        self.progress_label.configure(text=f"{week_total}/{self.WEEKLY_GOAL} min ({percentage}%)")
+        if hasattr(self, "progress_bar") and hasattr(self, "progress_label"):
+            percentage, week_total = self._get_current_week_progress()
+            progress_color = self.COLOR_GOAL_MET if percentage >= 100 else self.COLOR_ACCENT
+            self.progress_bar.configure(progress_color=progress_color)
+            self.progress_bar.set(percentage / 100)
+            self.progress_label.configure(text=f"{week_total}/{self.WEEKLY_GOAL} min ({percentage}%)")
 
     def _on_back_to_menu(self):
         """Handle back to menu button."""

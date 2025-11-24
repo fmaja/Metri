@@ -9,11 +9,13 @@ parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if parent_dir not in sys.path:
     sys.path.insert(0, parent_dir)
 
-from logic.song_func import (
+from ..logic.song_func import (
     load_songs, save_songs, get_song, get_new_song,
     song_create, song_edit, remove_song, filter_songs, get_tags
 )
-from logic.display_func import get_display, get_display_lyrics, get_display_chords, get_display_2
+from ..logic.display_func import (
+    get_display, get_display_lyrics, get_display_chords, get_display_2
+)
 
 
 class SongbookView(ctk.CTkFrame):
@@ -34,9 +36,12 @@ class SongbookView(ctk.CTkFrame):
     CARD_GAP = 12
     ACTION_BUTTON_WIDTH = 70
 
-    def __init__(self, master, back_callback: Optional[Callable] = None, **kwargs):
+    def __init__(self, master, sidebar=None, back_callback=None, show_module_callback=None, show_menu_callback=None, **kwargs):
         super().__init__(master, **kwargs)
+        self.sidebar = sidebar
         self.back_callback = back_callback
+        self._show_module = show_module_callback
+        self.show_menu = show_menu_callback
         self.configure(
             fg_color=self.BG_LIGHT if ctk.get_appearance_mode() == "Light" else self.BG_DARK
         )
@@ -850,19 +855,23 @@ class SongbookView(ctk.CTkFrame):
         """Apply filters; skip work if inputs unchanged unless force=True."""
         search_text = self.search_var.get().lower()
         language_filter = self.language_var.get()
-        selected_tags = [tag for tag, var in self.tag_vars.items() if var.get()]
+
+
         
         # Build search args for filter_songs
         search_args = {}
-        
+
+        selected_tag = self.tag_var.get()
+        if selected_tag != "Wszystkie":
+            search_args['tags'] = [selected_tag]
+
         if search_text:
             search_args['search'] = search_text
         
         if language_filter != "Wszystkie":
             search_args['language'] = language_filter
         
-        if selected_tags:
-            search_args['tags'] = selected_tags
+
         
         # Sort
         sort_option = self.sort_var.get()
@@ -888,7 +897,7 @@ class SongbookView(ctk.CTkFrame):
         signature = (
             search_text,
             language_filter,
-            tuple(sorted(selected_tags)),
+            tuple(sorted(selected_tag)),
             sort_option,
         )
 

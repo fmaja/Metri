@@ -33,7 +33,7 @@ class CalendarView(ctk.CTkFrame):
     DAY_CELL_SIZE = 40
     DAY_CELL_RADIUS = 20
 
-    def __init__(self, master, show_day_callback: Optional[Callable] = None, back_callback: Optional[Callable] = None,
+    def __init__(self, master, sidebar=None, back_callback=None, show_module_callback=None, show_menu_callback=None, show_day_callback: Optional[Callable] = None,
                  **kwargs):  # <-- ZMIENIONA SYGNATURA
         super().__init__(master, **kwargs)
 
@@ -52,7 +52,10 @@ class CalendarView(ctk.CTkFrame):
 
         # Callbacki
         self.show_day_callback = show_day_callback
+        self.sidebar = sidebar
         self.back_callback = back_callback
+        self._show_module = show_module_callback
+        self.show_menu = show_menu_callback
 
         # Budowa UI
         self.configure(fg_color=self._get_main_bg_color())  # <-- Ustawienie tła na dynamiczne
@@ -260,8 +263,17 @@ class CalendarView(ctk.CTkFrame):
         # Poprawiona ścieżka do ikony
         icon_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "assets", "icon.png")
         if os.path.exists(icon_path):
-            app_icon = ctk.CTkImage(light_image=Image.open(icon_path), size=(60, 65))
-            ctk.CTkLabel(left, image=app_icon, text="").pack(side="left", anchor="center")
+            self.app_icon = ctk.CTkImage(light_image=Image.open(icon_path), size=(60, 65))
+            self.menu_button = ctk.CTkButton(
+                left,
+                image=self.app_icon,
+                text="",
+                width=60,
+                height=65,
+                fg_color="transparent",
+                command=self.sidebar.toggle  # <<< zawsze ten sam sidebar
+            )
+            self.menu_button.pack(side="left", anchor="center")
 
         if self.back_callback:
             ctk.CTkButton(

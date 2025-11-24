@@ -87,9 +87,12 @@ class MetronomeView(ctk.CTkFrame):
 
     MAX_BEATS = 12
 
-    def __init__(self, master, back_callback: Optional[Callable] = None, **kwargs):  # <-- DODANE back_callback
+    def __init__(self, master, sidebar=None, back_callback=None, show_module_callback=None, show_menu_callback=None, **kwargs):  # <-- DODANE back_callback
         super().__init__(master, **kwargs)
-        self.back_callback = back_callback  # <-- DODANE
+        self.sidebar = sidebar
+        self.back_callback = back_callback
+        self._show_module = show_module_callback
+        self.show_menu = show_menu_callback
 
         # State variables
         self.bpm_var = ctk.IntVar(value=78)
@@ -298,8 +301,17 @@ class MetronomeView(ctk.CTkFrame):
         # Poprawiona ścieżka do ikony
         icon_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "assets", "icon.png")
         if os.path.exists(icon_path):
-            app_icon = ctk.CTkImage(light_image=Image.open(icon_path), size=(60, 65))
-            ctk.CTkLabel(left, image=app_icon, text="").pack(side="left", anchor="center")
+            self.app_icon = ctk.CTkImage(light_image=Image.open(icon_path), size=(60, 65))
+            self.menu_button = ctk.CTkButton(
+                left,
+                image=self.app_icon,
+                text="",
+                width=60,
+                height=65,
+                fg_color="transparent",
+                command=self.sidebar.toggle  # <<< zawsze ten sam sidebar
+            )
+            self.menu_button.pack(side="left", anchor="center")
 
         if self.back_callback:
             ctk.CTkButton(

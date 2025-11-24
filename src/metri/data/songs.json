@@ -11,7 +11,7 @@
         "timeSignature": "",
         "tuning": "",
         "capo": "",
-        "language": "pl",
+        "language": "eng",
         "tags": [],
         "content": [
             "v",
@@ -122,7 +122,7 @@
         "timeSignature": "",
         "tuning": "",
         "capo": "",
-        "language": "",
+        "language": "inny",
         "tags": [],
         "content": [
             "v",
@@ -170,7 +170,10 @@
         "tuning": "",
         "capo": "",
         "language": "pl",
-        "tags": [],
+        "tags": [
+            "uwielbienie",
+            "smutek"
+        ],
         "content": [
             "v",
             "va",
@@ -239,7 +242,9 @@
         "tuning": "",
         "capo": "",
         "language": "pl",
-        "tags": [],
+        "tags": [
+            "adwent"
+        ],
         "content": [
             "v",
             "v2",
@@ -331,8 +336,10 @@
         "timeSignature": "",
         "tuning": "",
         "capo": "",
-        "language": "",
-        "tags": [],
+        "language": "eng",
+        "tags": [
+            "adwent"
+        ],
         "content": [
             "v",
             "va",
@@ -406,12 +413,6 @@
                 "F",
                 "G"
             ],
-            "va2": [
-                "Am",
-                "Am/G",
-                "F G",
-                "Am"
-            ],
             "vc": [
                 "Am",
                 "Am",
@@ -419,6 +420,12 @@
                 "G",
                 "Am",
                 "G",
+                "F G",
+                "Am"
+            ],
+            "va2": [
+                "Am",
+                "Am/G",
                 "F G",
                 "Am"
             ],
@@ -446,7 +453,7 @@
         "timeSignature": "",
         "tuning": "",
         "capo": "",
-        "language": "pl",
+        "language": "inny",
         "tags": [],
         "content": [
             "i",
@@ -532,5 +539,56 @@
                 "Gmaj Dmaj Asus"
             ]
         }
+    },
+    {
+        "id": 10,
+        "title": "Dziwny jest ten świat",
+        "artist": "",
+        "group": "",
+        "lyricsby": [],
+        "musicby": [],
+        "key": "",
+        "bpm": "",
+        "timeSignature": "",
+        "tuning": "",
+        "capo": "",
+        "language": "pl",
+        "tags": [],
+        "content": [
+            "i"
+        ],
+        "lyrics": {
+            "i": [
+                "Dziwny jest ten świat",
+                "Gdzie jeszcze wciąż",
+                "Mieści się wiele zła",
+                "I dziwne jest to",
+                "Że od tylu lat",
+                "Człowiekiem gardzi człowiek",
+                "Dziwny ten świat",
+                "Świat ludzkich spraw",
+                "Czasem, aż wstyd przyznać się",
+                "A jednak często jest",
+                "Że ktoś słowem złym",
+                "Zabija tak, jak nożem",
+                "Lecz ludzi dobrej woli jest więcej",
+                "I mocno wierzę w to",
+                "Że ten świat",
+                "Nie zginie nigdy dzięki nim",
+                "Nie! Nie! Nie! Nie!",
+                "Nadszedł już czas",
+                "Najwyższy czas",
+                "Nienawiść zniszczyć w sobie",
+                "Lecz ludzi dobrej woli jest więcej",
+                "I mocno wierzę w to",
+                "Że ten świat",
+                "Nie zginie nigdy dzięki nim",
+                "Nie! Nie! Nie! Nie!",
+                "Nadszedł już czas",
+                "Najwyższy czas",
+                "Nienawiść zniszczyć w sobie"
+            ]
+        },
+        "chords": {}
     }
 ]

@@ -3,15 +3,16 @@ from typing import Callable, Optional
 import os
 import sys
 import re
+from PIL import Image
 
 # Add parent directory to path
 parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if parent_dir not in sys.path:
     sys.path.insert(0, parent_dir)
 
-from logic.song_func import get_song
-from logic.display_func import get_display
-from logic.keys import transpose
+from ..logic.song_func import get_song
+from ..logic.display_func import get_display
+from ..logic.keys import transpose
 
 
 class SongDisplayView(ctk.CTkFrame):
@@ -88,6 +89,21 @@ class SongDisplayView(ctk.CTkFrame):
         top_row = ctk.CTkFrame(header, fg_color="transparent")
         top_row.pack(fill="x", padx=20, pady=(15, 5))
 
+        left = ctk.CTkFrame(self.header, fg_color="transparent")
+        icon_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "assets", "icon.png")
+
+        if os.path.exists(icon_path):
+            self.app_icon = ctk.CTkImage(light_image=Image.open(icon_path), size=(60, 65))
+            self.menu_button = ctk.CTkButton(
+                left,
+                image=self.app_icon,
+                text="",
+                width=60,
+                height=65,
+                fg_color="transparent",
+                command=self.sidebar.toggle  # <<< zawsze ten sam sidebar
+            )
+            self.menu_button.pack(side="left", anchor="center")
         # Back button
         back_btn = ctk.CTkButton(
             top_row,
@@ -99,8 +115,7 @@ class SongDisplayView(ctk.CTkFrame):
             hover_color=self._get_darker_color(self.ACCENT_PURPLE),
             font=("Roboto", 14),
             corner_radius=10
-        )
-        back_btn.pack(side="left")
+        ).pack(side="left", anchor="center", padx=(10, 0))
 
         # Song info
         info_frame = ctk.CTkFrame(top_row, fg_color="transparent")
