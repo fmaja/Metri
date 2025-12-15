@@ -184,13 +184,7 @@ class IntervalQuizView(ctk.CTkFrame):
             "correct_interval_semitones": interval_semitones
         }
 
-        # DEBUG: Restore debug prints
-        correct_name = self.music_theory.get_interval_name(interval_semitones)
-        note1_name = self.music_theory.midi_to_note_name(note1_midi)
-        note2_name = self.music_theory.midi_to_note_name(note2_midi)
 
-        print(f"[DEBUG] Poprawna odpowiedź: {correct_name}")
-        print(f"[DEBUG] Naciśnij: {note1_name} → {note2_name}")
 
         self.safe_after(800, self.play_current_interval)
 
