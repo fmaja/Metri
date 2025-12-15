@@ -1,0 +1,594 @@
+[
+    {
+        "id": 3,
+        "title": "Wearing the inside out",
+        "artist": "",
+        "group": "Division Bell",
+        "lyricsby": [],
+        "musicby": [],
+        "key": "",
+        "bpm": "",
+        "timeSignature": "",
+        "tuning": "",
+        "capo": "",
+        "language": "eng",
+        "tags": [],
+        "content": [
+            "v",
+            "c",
+            "v2",
+            "i",
+            "vb",
+            "v3",
+            "vc",
+            "vd"
+        ],
+        "lyrics": {
+            "v": [
+                "From |morning to night I st|ayed out of s|ight",
+                "Didn|'t recogniz|e I'd become",
+                "No more than alive I'd barely survive",
+                "In a word...overrun"
+            ],
+            "c": [
+                "Won't |hear a sound from my mouth",
+                "I've spent |too long on the inside out",
+                "My skin is cold to the human touch",
+                "This bleeding heart's not beating much"
+            ],
+            "v2": [
+                "I murmured a vow of silence and now",
+                "I don't even hear when I think aloud",
+                "Extinguished by light I turn on the night",
+                "Wear its darkness with an empty smile"
+            ],
+            "i": [
+                "G Bm F#m G"
+            ],
+            "vb": [
+                "I'm creeping back to life",
+                "My nervous system all awry",
+                "I'm wearing the inside out"
+            ],
+            "v3": [
+                "Look at him now, he's paler somehow",
+                "But he's coming around",
+                "He's starting to choke, it's been so long since he spoke",
+                "Well he can have the words right from my mouth"
+            ],
+            "vc": [
+                "And with these words I can see",
+                "Clear through the clouds that covered me",
+                "Just give it time then speak my name",
+                "Now we can hear ourselves again"
+            ],
+            "vd": [
+                "I'm holding out for the day",
+                "When all these clouds have blown away",
+                "I'm with you now, can speak your name",
+                "Now we can hear ourselves again"
+            ]
+        },
+        "chords": {
+            "v": [
+                "Bm F#m",
+                "C#m E",
+                "Bm F#m",
+                "C#m E"
+            ],
+            "c": [
+                "F#m C#m",
+                "F#m C#m",
+                "F#m C#m",
+                "F#m C#m E"
+            ],
+            "vb": [
+                "Em",
+                "F#",
+                "G A"
+            ],
+            "vc": [
+                "F#m C#m"
+            ],
+            "vd": [
+                "F#m C#m",
+                "F#m C#m",
+                "F#m C#m",
+                "F#m C#m E A"
+            ],
+            "v2": [
+                "Bm F#m",
+                "C#m E",
+                "Bm F#m",
+                "C#m E"
+            ],
+            "v3": [
+                "Bm F#m",
+                "C#m E",
+                "Bm F#m",
+                "C#m E"
+            ]
+        }
+    },
+    {
+        "id": 5,
+        "title": "The Dragonborn Comes",
+        "artist": "",
+        "group": "",
+        "lyricsby": [],
+        "musicby": [],
+        "key": "",
+        "bpm": "",
+        "timeSignature": "",
+        "tuning": "",
+        "capo": "",
+        "language": "inny",
+        "tags": [],
+        "content": [
+            "v",
+            "c"
+        ],
+        "lyrics": {
+            "v": [
+                "Our Hero, our Hero, claims a warrior's heart",
+                "I tell you, I tell you, the Dragonborn comes",
+                "With a Voice wielding power of the ancient Nord art",
+                "Believe, believe, the Dragonborn comes",
+                "It's an end to the evil of all Skyrim's foes",
+                "Beware, beware, the Dragonborn comes",
+                "For the darkness has passed and the legend yet grows",
+                "You'll know, you'll know, the Dragonborn's come"
+            ],
+            "c": [
+                "Dovahkiin, Dovahkiin",
+                "Naal ok zin los vahriin",
+                "Wah dein vokul mahfaeraak ahst vaal",
+                "Ahrk fin norok paal graan",
+                "Fod nust hon zindro zaan",
+                "Dovahkiin, fah hin kogaan mu draal"
+            ]
+        },
+        "chords": {
+            "v": [
+                "Am G Am"
+            ],
+            "c": [
+                "C"
+            ]
+        }
+    },
+    {
+        "id": 6,
+        "title": "I Am The One",
+        "artist": "",
+        "group": "",
+        "lyricsby": [],
+        "musicby": [],
+        "key": "",
+        "bpm": "",
+        "timeSignature": "",
+        "tuning": "",
+        "capo": "",
+        "language": "pl",
+        "tags": [
+            "uwielbienie",
+            "smutek"
+        ],
+        "content": [
+            "v",
+            "va",
+            "vb",
+            "vc"
+        ],
+        "lyrics": {
+            "v": [
+                "I feel |sun through the |ashes |in the |sky",
+                "Where's the one who'll guide us into the night?",
+                "What's begun is the war that will force this divide",
+                "What's to come is fire and the end of time"
+            ],
+            "va": [
+                "I am the one",
+                "who can recount what we've lost",
+                "I am the one",
+                "Who will live on"
+            ],
+            "vb": [
+                "I have run through the fields of pain and sighs",
+                "I have fought to see the other side"
+            ],
+            "vc": [
+                "I am the one",
+                "who can recount what we've lost",
+                "I am the one",
+                "Who will live on"
+            ]
+        },
+        "chords": {
+            "v": [
+                "C# A B F#m",
+                "C# A E F# C#m G#m",
+                "C# A B C#",
+                "C# A E F# G#m C#"
+            ],
+            "va": [
+                "D# F# G#",
+                "B D# F# G# B",
+                "D# F# G#",
+                "B C#m F#"
+            ],
+            "vb": [
+                "C# A B C# F#m",
+                "C# A E F# G#m C#"
+            ],
+            "vc": [
+                "D# F# G#",
+                "B D# F# G# B",
+                "D# F# G#",
+                "B G#"
+            ]
+        }
+    },
+    {
+        "id": 7,
+        "title": "Hey You",
+        "artist": "",
+        "group": "",
+        "lyricsby": [],
+        "musicby": [],
+        "key": "",
+        "bpm": "",
+        "timeSignature": "",
+        "tuning": "",
+        "capo": "",
+        "language": "pl",
+        "tags": [
+            "adwent"
+        ],
+        "content": [
+            "v",
+            "v2",
+            "i",
+            "vc",
+            "i2",
+            "vd"
+        ],
+        "lyrics": {
+            "v": [
+                "Hey you! out the|re in the cold",
+                "Getting lonely, g|etting old, can you feel me?",
+                "Hey you! standing in t|he aisles",
+                "With itchy feet and fading smiles, can you feel me?",
+                "Hey y|ou! don't you he|lp them to bury the li-ii-ght",
+                "Don't give in |without a fight"
+            ],
+            "v2": [
+                "Hey you! out there on your own",
+                "Sitting naked by the phone, would you touch me?",
+                "Hey you! with your ear against the wall",
+                "Waiting for someone to call out, would you touch me?",
+                "Hey you! would you help me to carry the sto-o-one?",
+                "Open your heart, I'm coming home"
+            ],
+            "i": [
+                "Em Am"
+            ],
+            "vc": [
+                "But it was only a fantasy",
+                "The wall was too high, as you can see",
+                "No matter how he tried he could not break free",
+                "And the worms ate into his brain"
+            ],
+            "i2": [
+                "Emadd9 Dm"
+            ],
+            "vd": [
+                "Hey you! out there on the road",
+                "Always doing what you're told, can you help me?",
+                "Hey you! out there beyond the wall",
+                "Breaking bottles in the hall, can you help me?",
+                "Hey you! don't tell me there's no hope at a-aa-ll",
+                "Together we stand, divided we fall."
+            ]
+        },
+        "chords": {
+            "v": [
+                "Em",
+                "Bm",
+                "Emadd9",
+                "Bm",
+                "D G D C",
+                "Bm Am Em Dm"
+            ],
+            "vc": [
+                "C D G D C",
+                "C D G D C",
+                "C D G D C",
+                "C D Emadd9"
+            ],
+            "vd": [
+                "Emadd9",
+                "Bm",
+                "Emadd9",
+                "Bm",
+                "D G D C",
+                "Bm Am Emadd9"
+            ],
+            "v2": [
+                "Em",
+                "Bm",
+                "Emadd9",
+                "Bm",
+                "D G D C",
+                "Bm Am Em Dm"
+            ]
+        }
+    },
+    {
+        "id": 8,
+        "title": "Enchanter",
+        "artist": "",
+        "group": "",
+        "lyricsby": [],
+        "musicby": [],
+        "key": "",
+        "bpm": "",
+        "timeSignature": "",
+        "tuning": "",
+        "capo": "",
+        "language": "eng",
+        "tags": [
+            "adwent"
+        ],
+        "content": [
+            "v",
+            "va",
+            "vb",
+            "va2",
+            "vc",
+            "vc2"
+        ],
+        "lyrics": {
+            "v": [
+                "Enchanters!",
+                "The time has come to be alive",
+                "With the Circle of Magi",
+                "We will thrive with our brothers"
+            ],
+            "va": [
+                "Enchanters remind",
+                "That time cannot unwind",
+                "The dragon's crooked spine",
+                "Will never straighten into line"
+            ],
+            "vb": [
+                "What our plea, will be",
+                "A faithful end decree",
+                "Where a man will not retreat",
+                "From the defeat of his fathers"
+            ],
+            "va2": [
+                "Enchanters!",
+                "A time has come for battle lines",
+                "We will cut these knotted ties",
+                "And some may live and some may die"
+            ],
+            "vc": [
+                "Enchanter, come to me",
+                "Enchanter, come to me",
+                "Enchanter, come to see",
+                "Can-a you, can-a you come to see?",
+                "As you once were blind",
+                "In the light now you can sing",
+                "In our strength we can rely",
+                "And history will not repeat"
+            ],
+            "vc2": [
+                "Enchanter, come to me",
+                "Enchanter, come to me",
+                "Enchanter, come to see",
+                "Can-a you, can-a you come to see?",
+                "As you once were blind",
+                "In the light now you can sing",
+                "In our strength we can rely",
+                "And history will not repeat"
+            ]
+        },
+        "chords": {
+            "v": [
+                "Am",
+                "Am/G",
+                "F",
+                "G"
+            ],
+            "va": [
+                "Am",
+                "Am/G",
+                "F G",
+                "Am"
+            ],
+            "vb": [
+                "Am",
+                "Am/G",
+                "F",
+                "G"
+            ],
+            "vc": [
+                "Am",
+                "Am",
+                "G",
+                "G",
+                "Am",
+                "G",
+                "F G",
+                "Am"
+            ],
+            "va2": [
+                "Am",
+                "Am/G",
+                "F G",
+                "Am"
+            ],
+            "vc2": [
+                "Am",
+                "Am",
+                "G",
+                "G",
+                "Am",
+                "G",
+                "F G",
+                "Am"
+            ]
+        }
+    },
+    {
+        "id": 9,
+        "title": "Maker",
+        "artist": "",
+        "group": "",
+        "lyricsby": [],
+        "musicby": [],
+        "key": "",
+        "bpm": "",
+        "timeSignature": "",
+        "tuning": "",
+        "capo": "",
+        "language": "inny",
+        "tags": [],
+        "content": [
+            "i",
+            "v",
+            "va",
+            "vb",
+            "vc",
+            "vd",
+            "va2",
+            "ve",
+            "vf"
+        ],
+        "lyrics": {
+            "i": [
+                "Em / Em / Dmaj / Em"
+            ],
+            "v": [
+                "Maker",
+                "Have you left me here"
+            ],
+            "va": [
+                "Temple",
+                "Sacred Ash - es"
+            ],
+            "vb": [
+                "Tragic",
+                "Mark u-pon our land"
+            ],
+            "vc": [
+                "Sky fall",
+                "Let dark - ness reign on thee"
+            ],
+            "vd": [
+                "Now flee",
+                "From the dragon’s heart"
+            ],
+            "va2": [
+                "Warring",
+                "Batt - le - scarred eyes"
+            ],
+            "ve": [
+                "Breach",
+                "Into the Fade has come"
+            ],
+            "vf": [
+                "Demon",
+                "Please spare my life",
+                "And our sons"
+            ]
+        },
+        "chords": {
+            "v": [
+                "Em",
+                "Em Dmaj Em"
+            ],
+            "va": [
+                "Em",
+                "Gmaj Dmaj Asus"
+            ],
+            "vb": [
+                "Em",
+                "Em Dmaj"
+            ],
+            "vc": [
+                "Em",
+                "Gmaj Dmaj Asus Em"
+            ],
+            "vd": [
+                "Em",
+                "Dmaj Em"
+            ],
+            "ve": [
+                "Em",
+                "Dmaj"
+            ],
+            "vf": [
+                "Em",
+                "Gmaj Dmaj Asus",
+                "Em"
+            ],
+            "va2": [
+                "Em",
+                "Gmaj Dmaj Asus"
+            ]
+        }
+    },
+    {
+        "id": 10,
+        "title": "Dziwny jest ten świat",
+        "artist": "",
+        "group": "",
+        "lyricsby": [],
+        "musicby": [],
+        "key": "",
+        "bpm": "",
+        "timeSignature": "",
+        "tuning": "",
+        "capo": "",
+        "language": "pl",
+        "tags": [],
+        "content": [
+            "i"
+        ],
+        "lyrics": {
+            "i": [
+                "Dziwny jest ten świat",
+                "Gdzie jeszcze wciąż",
+                "Mieści się wiele zła",
+                "I dziwne jest to",
+                "Że od tylu lat",
+                "Człowiekiem gardzi człowiek",
+                "Dziwny ten świat",
+                "Świat ludzkich spraw",
+                "Czasem, aż wstyd przyznać się",
+                "A jednak często jest",
+                "Że ktoś słowem złym",
+                "Zabija tak, jak nożem",
+                "Lecz ludzi dobrej woli jest więcej",
+                "I mocno wierzę w to",
+                "Że ten świat",
+                "Nie zginie nigdy dzięki nim",
+                "Nie! Nie! Nie! Nie!",
+                "Nadszedł już czas",
+                "Najwyższy czas",
+                "Nienawiść zniszczyć w sobie",
+                "Lecz ludzi dobrej woli jest więcej",
+                "I mocno wierzę w to",
+                "Że ten świat",
+                "Nie zginie nigdy dzięki nim",
+                "Nie! Nie! Nie! Nie!",
+                "Nadszedł już czas",
+                "Najwyższy czas",
+                "Nienawiść zniszczyć w sobie"
+            ]
+        },
+        "chords": {}
+    }
+]

@@ -1,0 +1,38 @@
+[
+  {
+    "title": "Imagine",
+    "artist": "John Lennon",
+    "language": "Angielski",
+    "tags": ["rock", "ballada", "klasyka"],
+    "lyrics": "Imagine there's no heaven\nIt's easy if you try\nNo hell below us\nAbove us only sky\n\nImagine all the people\nLiving for today...",
+    "chords": "C - Cmaj7 - F\nC - Cmaj7 - F\nAm/E - Dm7 - F/C - G - G7",
+    "date_added": "2025-11-21T10:00:00"
+  },
+  {
+    "title": "Kocham Cię jak Irlandię",
+    "artist": "Jacek Kaczmarski",
+    "language": "Polski",
+    "tags": ["ballada", "akustyczne", "poezja"],
+    "lyrics": "Kocham Cię jak Irlandię\nZa Twój ciepły deszcz\nKtóry mi w twarz uderza\nJak przyjaciel stary gdzieś...",
+    "chords": "Em - D - C - G\nEm - D - C - B7\nC - G - Am - Em\nC - D - G",
+    "date_added": "2025-11-21T10:15:00"
+  },
+  {
+    "title": "Wehikuł czasu",
+    "artist": "Kult",
+    "language": "Polski",
+    "tags": ["rock", "polski rock"],
+    "lyrics": "I choćbym miał możliwość\nPrzejść przez życie dwa razy\nTo jeszcze raz w tym samym\nKierunku bym podążył...",
+    "chords": "G - D - Em - C\nG - D - C - G",
+    "date_added": "2025-11-21T10:30:00"
+  },
+  {
+    "title": "Wonderwall",
+    "artist": "Oasis",
+    "language": "Angielski",
+    "tags": ["rock", "britpop", "klasyka"],
+    "lyrics": "Today is gonna be the day\nThat they're gonna throw it back to you\nBy now you should've somehow\nRealized what you gotta do...",
+    "chords": "Em7 - G - Dsus4 - A7sus4\nCadd9 - D - A7sus4",
+    "date_added": "2025-11-21T10:45:00"
+  }
+]
