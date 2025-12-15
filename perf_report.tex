@@ -1,0 +1,130 @@
+\documentclass[12pt,a4paper]{article}
+
+% Polish language support with pdfLaTeX
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[polish]{babel}
+\usepackage{lmodern}
+
+% Packages
+\usepackage{geometry}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{hyperref}
+\usepackage[normalem]{ulem}
+\usepackage{amsmath, amssymb}
+
+\geometry{margin=2.5cm}
+
+\definecolor{passgreen}{RGB}{46,204,113}
+\definecolor{failred}{RGB}{231,76,60}
+\definecolor{coverage}{RGB}{52,152,219}
+
+\title{Raport Testów Wydajności\newline Aplikacja Metri}
+\date{15 grudnia 2025}
+
+\begin{document}
+
+\maketitle
+\tableofcontents
+\newpage
+
+\section{Zakres i uruchamianie}
+
+Niniejszy raport dokumentuje wyniki testów wydajności kluczowych fragmentów logiki aplikacji Metri. Celem benchmarków jest ocena czasu wykonania operacji, które mogą mieć istotny wpływ na odczuwalną szybkość działania aplikacji przy pracy na większych zbiorach danych.
+
+Zakres obejmuje następujące obszary (bez warstwy GUI i bez operacji dyskowych):
+\begin{itemize}
+    \item \textbf{Renderowanie piosenek} – generowanie widoków tekstowych z wewnętrznym formatowaniem (np. tagi \texttt{<b>}, \texttt{<i>}, \texttt{<code>}) na potrzeby podglądu utworów (moduł \texttt{display\_func}).
+    \item \textbf{Parsowanie treści} – konwersja surowych tekstów piosenek do ustrukturyzowanego formatu JSON (moduł \texttt{jsonify\_func}).
+    \item \textbf{Operacje na songbooku} – filtrowanie, wyszukiwanie i agregacja metadanych dla dużej liczby piosenek (moduł \texttt{song\_func}).
+\end{itemize}
+
+Benchmarki uruchamiane są za pomocą \texttt{pytest-benchmark} i oznaczone markerem \texttt{perf}, dzięki czemu domyślnie nie są wykonywane podczas zwykłego \texttt{pytest}. Aby wykonać wyłącznie testy wydajności, należy użyć polecenia:
+\begin{verbatim}
+.venv\Scripts\python.exe -m pytest tests/test_perf.py -m perf --benchmark-only
+\end{verbatim}
+
+\section{Metodologia}
+
+\begin{itemize}
+    \item Narzędzie: \texttt{pytest-benchmark} (domyślne ustawienia: min\_rounds=5, max\_time=1s, timer=\texttt{time.perf\_counter}).
+    \item Dane syntetyczne wstrzykiwane przez \texttt{monkeypatch} (brak I/O plików, brak GUI), aby mierzyć samą logikę.
+    \item Każdy benchmark wykonuje wiele iteracji (\texttt{Rounds}) – wyniki raportowane jako średni czas oraz OPS (operacje/s).
+    \item Środowisko: Windows, Python 3.13.2, wirtualne środowisko projektu.
+\end{itemize}
+
+\section{Opis scenariuszy}
+
+Poniższe benchmarki odzwierciedlają typowe i skrajne przypadki użycia aplikacji.
+
+\begin{itemize}
+    \item \textbf{test\_display\_html\_many\_songs} – generowanie sformatowanego tekstu (z tagami w stylu HTML, np. \texttt{<b>}, \texttt{<i>}, \texttt{<code>}) dla 200 piosenek. Scenariusz odwzorowuje sytuację, w której użytkownik intensywnie przegląda utwory, a aplikacja musi wielokrotnie budować złożony widok w oknie desktopowym.
+
+    \item \textbf{test\_display\_plaintext\_many\_songs} – generowanie prostego, dwuwierszowego widoku tekstowego (tekst + akord) dla 200 piosenek. Mierzy czas działania uproszczonej ścieżki bez HTML, wykorzystywanej np. do eksportu lub prostych podglądów.
+
+    \item \textbf{test\_jsonify\_auto\_bulk} – parsowanie 300 surowych bloków tekstu (sekcje, akordy, liryki) do struktury JSON. Scenariusz odpowiada hurtowemu importowi lub konwersji większej liczby piosenek z formatu tekstowego do wewnętrznego modelu aplikacji.
+
+    \item \textbf{test\_add\_very\_long\_song\_jsonify} – parsowanie pojedynczej, bardzo długiej piosenki (setki linii tekstu). Odzwierciedla sytuację, w której użytkownik dodaje rozbudowany utwór, a aplikacja musi zachować płynność działania.
+
+    \item \textbf{test\_add\_dense\_chords\_song\_jsonify} – parsowanie długiej piosenki z gęsto rozmieszczonymi i złożonymi akordami (np. \texttt{Asus4/D}, \texttt{Gmbadd9/F}, \texttt{Bbmaj7}). Scenariusz obciąża przede wszystkim regexy i logikę wykrywania akordów, reprezentując „najtrudniejsze” przypadki harmoniczne.
+
+    \item \textbf{test\_filter\_songs\_large\_dataset} – filtrowanie i sortowanie 1000 piosenek po tytule, języku i tagach. Jest to przybliżenie pracy z większym, ale nadal typowym songbookiem użytkownika.
+
+    \item \textbf{test\_get\_tags\_large\_dataset} – agregacja i deduplikacja tagów z 1000 piosenek. Test mierzy koszt budowania list pomocniczych (np. do filtrów po tagach) dla średniej wielkości biblioteki.
+
+    \item \textbf{test\_filter\_songs\_huge\_dataset} – to samo zapytanie filtrujące wykonane na 10\,000 piosenek. Scenariusz sprawdza, jak rośnie czas odpowiedzi wraz z rozmiarem kolekcji i czy algorytmy filtrowania skalują się liniowo.
+
+    \item \textbf{test\_list\_many\_songs\_mapping} – przekształcenie listy 10\,000 piosenek do uproszczonej struktury (id, tytuł, wykonawca, język, tagi), która mogłaby zostać przekazana do warstwy UI. Test mierzy koszt samego przygotowania danych, bez rysowania widoku.
+\end{itemize}
+
+\section{Wyniki (15.12.2025, Windows, Python 3.13.2)}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lrrr}
+\toprule
+\textbf{Benchmark} & \textbf{Średni czas} & \textbf{OPS (1/średni)} & \textbf{Rounds} \\
+\midrule
+\bottomrule
+\end{tabular}
+\begin{tabular}{lrrr}
+    oprule
+    extbf{Benchmark} & \textbf{Średni czas} & \textbf{OPS (1/średni)} & \textbf{Rounds} \\
+\midrule
+    exttt{test\_get\_tags\_large\_dataset} & \(\sim 0.218\,\text{ms}\) & \(\sim 4585\) & 4720 \\
+    exttt{test\_filter\_songs\_large\_dataset} & \(\sim 0.387\,\text{ms}\) & \(\sim 2582\) & 1421 \\
+    exttt{test\_display\_plaintext\_many\_songs} & \(\sim 0.570\,\text{ms}\) & \(\sim 1754\) & 1746 \\
+    exttt{test\_add\_dense\_chords\_song\_jsonify} & \(\sim 1.056\,\text{ms}\) & \(\sim 947\) & 824 \\
+    exttt{test\_add\_very\_long\_song\_jsonify} & \(\sim 1.092\,\text{ms}\) & \(\sim 915\) & 866 \\
+    exttt{test\_display\_html\_many\_songs} & \(\sim 3.921\,\text{ms}\) & \(\sim 255\) & 251 \\
+    exttt{test\_filter\_songs\_huge\_dataset} & \(\sim 4.100\,\text{ms}\) & \(\sim 244\) & 259 \\
+    exttt{test\_list\_many\_songs\_mapping} & \(\sim 4.259\,\text{ms}\) & \(\sim 235\) & 177 \\
+    exttt{test\_jsonify\_auto\_bulk} & \(\sim 8.266\,\text{ms}\) & \(\sim 121\) & 101 \\
+\bottomrule
+\end{tabular}
+\caption{Podsumowanie benchmarków wydajności (dane syntetyczne, wstrzykiwane przez \texttt{monkeypatch})}
+\end{table}
+
+\section{Uwagi}
+
+\begin{itemize}
+    \item Dane testowe są syntetyczne; celem jest porównanie względne między wersjami (regresje/przyspieszenia).
+    \item Benchmarki są oznaczone markerem \texttt{perf}; bez opcji \texttt{--benchmark-only} zostaną pominięte.
+    \item Wymagany pakiet: \texttt{pytest-benchmark} (dodany do \texttt{requirements.txt}).
+    \item Jeśli potrzebujesz porównań między gałęziami/wersjami, użyj wbudowanej komendy: \texttt{pytest-benchmark compare \textless plik1\textgreater\ \textless plik2\textgreater}.
+    \item Dalsze rozszerzenia: dodać scenariusz pełnego startu aplikacji (czas inicjalizacji GUI) oraz prosty test opóźnienia MIDI po mocku \texttt{pygame}.
+\end{itemize}
+
+\section{Wnioski}
+
+\begin{itemize}
+    \item Czysta logika jest bardzo lekka: operacje na 1000 piosenek (tagi/filtrowanie) mieszczą się w ułamkach milisekundy na wywołanie.
+    \item Render tekstowy/HTML dla 200 piosenek zamyka się w pojedynczych milisekundach na piosenkę; to nie wygląda na wąskie gardło przy typowym użyciu.
+    \item Parsowanie surowych bloków (\texttt{jsonify\_func}) jest wolniejsze od renderu, ale nadal \(<10\,\text{ms}\) na blok — akceptowalne dla wsadowych operacji.
+    \item Realne czasy w aplikacji wzrosną o narzut I/O i GUI; jeśli zauważysz lagi, zmierz konkretny scenariusz końcowy (z plikami/oknem) i profiluj, zamiast optymalizować w ciemno.
+    \item Progi orientacyjne: render HTML \(\leq 5\,\text{ms}\)/piosenka, parsowanie \(\leq 10\,\text{ms}\)/blok; przekroczenie tych wartości w realnych scenariuszach to sygnał do profilowania.
+\end{itemize}
+
+\end{document}

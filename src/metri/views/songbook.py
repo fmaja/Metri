@@ -871,6 +871,8 @@ class SongbookView(ctk.CTkFrame):
         if language_filter != "Wszystkie":
             search_args['language'] = language_filter
         
+        # Build a stable cache signature for current filters
+        tag_signature = None if selected_tag == "Wszystkie" else selected_tag
 
         
         # Sort
@@ -897,7 +899,7 @@ class SongbookView(ctk.CTkFrame):
         signature = (
             search_text,
             language_filter,
-            tuple(sorted(selected_tag)),
+            tag_signature,
             sort_option,
         )
 
@@ -1240,7 +1242,7 @@ class SongbookView(ctk.CTkFrame):
                 display_data = get_display_2(self.current_display_song_id)
                 self._render_side_by_side(scroll, display_data)
             else:
-                display_text = get_display(self.current_display_song_id, 0)
+                display_text = get_display(self.current_display_song_id)
                 self._parse_display_text(scroll, display_text)
         except Exception as exc:
             ctk.CTkLabel(
@@ -1482,8 +1484,8 @@ class SongbookView(ctk.CTkFrame):
             "timeSignature": song.get("timeSignature", ""),
         })
 
-        data["lyrics"] = get_display_lyrics(self.current_form_song_id, 0)
-        data["chords"] = get_display_chords(self.current_form_song_id, 0)
+        data["lyrics"] = get_display_lyrics(self.current_form_song_id)
+        data["chords"] = get_display_chords(self.current_form_song_id)
 
         return data
 

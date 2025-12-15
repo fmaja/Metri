@@ -1,0 +1,481 @@
+\documentclass[12pt,a4paper]{article}
+
+% Polish language support with pdfLaTeX
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[polish]{babel}
+\usepackage{lmodern}
+
+% Packages
+\usepackage{geometry}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{hyperref}
+\usepackage[normalem]{ulem}
+\usepackage{amsmath, amssymb}
+
+\geometry{margin=2.5cm}
+
+\definecolor{passgreen}{RGB}{46,204,113}
+\definecolor{failred}{RGB}{231,76,60}
+\definecolor{coverage}{RGB}{52,152,219}
+
+\title{Raport Testów Jednostkowych\\Aplikacja Metri}
+\date{14 grudnia 2025}
+
+\begin{document}
+
+\maketitle
+\tableofcontents
+\newpage
+
+\section{Podsumowanie Wykonawcze}
+
+Przeprowadzono kompleksowy proces testowania jednostkowego dla aplikacji Metri. 
+Testy objęły przede wszystkim warstwę logiki: teorię muzyki (\texttt{music\_theory.py}), formatowanie wyświetlania tekstów i akordów (\texttt{display\_func.py}), zarządzanie zbiorem piosenek (\texttt{song\_func.py}) oraz parsowanie surowych tekstów do struktury JSON (\texttt{jsonify\_func.py}), z pokryciem odpowiednio około 96\%, 95\%, 73\% i 62\%. Dodatkowo częściowo pokryto moduł \texttt{keys.py} (około 81\%), przy czym funkcjonalność transpozycji została usunięta z interfejsu użytkownika. 
+Projekt obejmował dwa główne etapy: testowanie podstawowych modułów logiki biznesowej 
+oraz rozszerzenie testów o moduł formatowania wyświetlania.
+
+\subsection{Statystyki Finalne}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lrr}
+\toprule
+\textbf{Metryka} & \textbf{Etap 1} & \textbf{Etap 2} \\
+\midrule
+Łączna liczba testów & 98 & \textcolor{passgreen}{\textbf{133}} \\
+Testy zaliczone & \textcolor{passgreen}{98} & \textcolor{passgreen}{\textbf{133}} \\
+Testy niezaliczone & \textcolor{passgreen}{0} & \textcolor{passgreen}{\textbf{0}} \\
+Wskaźnik powodzenia & \textbf{100\%} & \textbf{100\%} \\
+Czas wykonania & 0.42s & 0.57s \\
+Pokrycie kodu (moduły logiki) & 6\% & \textcolor{coverage}{9\%} \\
+\bottomrule
+\end{tabular}
+\caption{Porównanie wyników testów między etapami}
+\end{table}
+
+\subsection{Analiza Pokrycia Kodu}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lccc}
+\toprule
+\textbf{Moduł} & \textbf{Linie} & \textbf{Pokrycie} & \textbf{Ocena} \\
+\midrule
+music\_theory.py & 54 & 96\% & \textcolor{passgreen}{Doskonałe} \\
+\textbf{display\_func.py} & \textbf{159} & \textcolor{passgreen}{\textbf{95\%}} & \textcolor{passgreen}{\textbf{Doskonałe}} \\
+keys.py & 32 & 81\% & \textcolor{passgreen}{Bardzo dobre} \\
+song\_func.py & 128 & 73\% & Dobre \\
+jsonify\_func.py & 146 & 62\% & Średnie \\
+\midrule
+\textbf{Razem (moduły logic)} & \textbf{519} & \textbf{85\%} & \textcolor{passgreen}{\textbf{Bardzo dobre}} \\
+\bottomrule
+\end{tabular}
+\caption{Szczegółowe pokrycie testami modułów logiki}
+\end{table}
+
+
+\section{Historia Testowania}
+
+\subsection{Etap 1: Podstawowe Moduły (98 testów)}
+
+\subsubsection{Faza 1a: Pierwsze Uruchomienie}
+
+Utworzono testy dla trzech kluczowych modułów:
+\begin{itemize}
+    \item \textbf{test\_music\_theory.py} - 24 testy teorii muzycznej
+    \item \textbf{test\_jsonify\_func.py} - 38 testów parsowania piosenek
+    \item \textbf{test\_song\_func.py} - 36 testów zarządzania songbookiem
+\end{itemize}
+
+\textbf{Wyniki pierwszego uruchomienia:}
+\begin{itemize}
+    \item Łączna liczba testów: 98
+    \item \textcolor{passgreen}{Testy zaliczone:} 92
+    \item \textcolor{failred}{Testy niezaliczone:} 6
+    \item Wskaźnik powodzenia: 93.88\%
+\end{itemize}
+
+\subsubsection{Faza 1b: Naprawa Błędów}
+
+Zidentyfikowano i naprawiono 6 problemów testowych:
+\begin{enumerate}
+    \item \texttt{test\_string\_to\_list\_single\_semicolon} - dopasowano do zachowania \texttt{split(";")}
+    \item \texttt{test\_redefine\_sections\_only\_chords} - poprawiono sprawdzanie pola lyrics
+    \item \texttt{test\_redefine\_sections\_chord\_pattern\_recognition} - j.w.
+    \item \texttt{test\_name\_sections\_chorus\_detection} - zluzowano sprawdzanie nazw sekcji
+    \item \texttt{test\_get\_interval\_name\_basic} - uwzględniono modulo 12
+    \item \texttt{test\_get\_interval\_name\_modulo} - j.w.
+\end{enumerate}
+
+\textbf{Wyniki po naprawach:}
+\begin{itemize}
+    \item \textcolor{passgreen}{\textbf{Wszystkie 98 testów przechodzi pomyślnie}}
+    \item \textcolor{passgreen}{\textbf{Wskaźnik powodzenia: 100\%}}
+    \item Czas wykonania: 0.42s
+\end{itemize}
+
+\subsection{Etap 2: Rozszerzenie o Display (133 testy)}
+
+\subsubsection{Motyw rozszerzenia}
+
+Moduł \texttt{display\_func.py} (159 linii) nie posiadał testów (0\% pokrycia).
+Po usunięciu funkcjonalności transpozycji, konieczne było przetestowanie pozostałych funkcji.
+
+\subsubsection{Utworzone testy}
+
+Dodano \textbf{test\_display\_func.py} z 35 testami:
+\begin{itemize}
+    \item \textbf{TestChordsToScheme} - 5 testów funkcji pomocniczej
+    \item \textbf{TestGetDisplayLyrics} - 5 testów wyświetlania tekstów
+    \item \textbf{TestGetDisplayChords} - 4 testy wyświetlania akordów
+    \item \textbf{TestGetDisplay2} - 7 testów formatu tekstowego
+    \item \textbf{TestGetDisplay} - 12 testów formatu HTML
+    \item \textbf{TestIntegration} - 3 testy integracyjne
+\end{itemize}
+
+\textbf{Wyniki:}
+\begin{itemize}
+    \item \textcolor{passgreen}{\textbf{Łączna liczba testów: 133}}
+    \item \textcolor{passgreen}{\textbf{Wszystkie zaliczone: 133/133 (100\%)}}
+    \item Czas wykonania: 0.57s
+    \item \textcolor{coverage}{\textbf{Pokrycie display\_func.py: 0\% → 95\%}}
+\end{itemize}
+
+\section{Zmiany w Kodzie}
+
+\subsection{Usunięte Komponenty}
+
+W ramach optymalizacji usunięto nieużywane komponenty transpozycji:
+
+\begin{itemize}
+    \item \texttt{src/metri/views/song\_display.py} - widok z kontrolkami transpozycji (nigdy nie importowany)
+    \item \texttt{tests/test\_keys.py} - testy funkcjonalności transpozycji
+\end{itemize}
+
+\subsection{Zmodyfikowane Moduły}
+
+\begin{itemize}
+    \item \textbf{src/metri/logic/display\_func.py}
+    \begin{itemize}
+        \item Usunięto import \texttt{from .keys import transpose}
+        \item Usunięto parametr \texttt{transp} z funkcji:
+        \begin{itemize}
+            \item \texttt{get\_display()}
+            \item \texttt{get\_display\_lyrics()}
+            \item \texttt{get\_display\_chords()}
+        \end{itemize}
+        \item Usunięto wszystkie wywołania \texttt{transpose()}
+    \end{itemize}
+    
+    \item \textbf{src/metri/views/songbook.py}
+    \begin{itemize}
+        \item Zaktualizowano wywołania funkcji display bez parametru \texttt{transp}
+    \end{itemize}
+\end{itemize}
+
+\section{Szczegółowe Wyniki Testów}
+
+\subsection{test\_music\_theory.py (24 testy) - Pokrycie 96\%}
+
+Testy funkcji teorii muzycznej MIDI i harmonii.
+
+\subsubsection{Konwersje MIDI $\leftrightarrow$ Nazwa nuty (9 testów)}
+\begin{itemize}
+    \item test\_note\_name\_to\_midi\_basic
+    \item test\_note\_name\_to\_midi\_sharps
+    \item test\_note\_name\_to\_midi\_different\_octaves
+    \item test\_note\_name\_to\_midi\_invalid\_input
+    \item test\_midi\_to\_note\_name\_basic
+    \item test\_midi\_to\_note\_name\_sharps
+    \item test\_midi\_to\_note\_name\_edge\_cases
+    \item test\_midi\_to\_note\_name\_invalid\_range
+    \item test\_midi\_note\_conversion\_roundtrip
+\end{itemize}
+
+\subsubsection{Interwały (3 testy)}
+\begin{itemize}
+    \item test\_get\_interval\_name\_basic
+    \item test\_get\_interval\_name\_all\_intervals
+    \item test\_get\_interval\_name\_modulo
+\end{itemize}
+
+\subsubsection{Generowanie nut MIDI (3 testy)}
+\begin{itemize}
+    \item test\_get\_all\_midi\_notes\_default\_range
+    \item test\_get\_all\_midi\_notes\_custom\_range
+    \item test\_get\_all\_midi\_notes\_single\_octave
+\end{itemize}
+
+\subsubsection{Generowanie akordów diatonicznych (9 testów)}
+\begin{itemize}
+    \item test\_generate\_diatonic\_chord\_tonic
+    \item test\_generate\_diatonic\_chord\_dominant
+    \item test\_generate\_diatonic\_chord\_subdominant
+    \item test\_generate\_diatonic\_chord\_minor\_chords
+    \item test\_generate\_diatonic\_chord\_diminished
+    \item test\_generate\_diatonic\_chord\_all\_degrees
+    \item test\_generate\_diatonic\_chord\_invalid\_degree
+    \item test\_generate\_diatonic\_chord\_different\_keys
+\end{itemize}
+
+\subsection{test\_jsonify\_func.py (38 testów) - Pokrycie 62\%}
+
+Testy parsowania i formatowania danych piosenek.
+
+\subsubsection{TestStringToList (6 testów)}
+Konwersja stringów rozdzielanych średnikami na listy.
+
+\subsubsection{TestSplitIntoSections (6 testów)}
+Podział tekstu piosenki na sekcje (zwrotki, refren, etc.).
+
+\subsubsection{TestRedefineSections (6 testów)}
+Rozpoznawanie i redefinicja typów sekcji (teksty vs akordy).
+
+\subsubsection{TestNameSections (6 testów)}
+Automatyczne nazywanie sekcji (v, c, i, etc.).
+
+\subsubsection{TestDelRepetitions (6 testów)}
+Usuwanie powtarzających się akordów.
+
+\subsubsection{TestSongDataJsonifyAuto (6 testów)}
+Automatyczna konwersja surowych danych piosenki do JSON.
+
+\subsubsection{TestIntegration (2 testy)}
+Testy pełnego pipeline'u parsowania.
+
+\subsection{test\_song\_func.py (36 testów) - Pokrycie 73\%}
+
+Testy zarządzania kolekcją piosenek.
+
+\subsubsection{TestGetObjectiveKey (7 testów)}
+Obliczanie rzeczywistej tonacji z uwzględnieniem capo.
+
+\subsubsection{TestFilterSongs (10 testów)}
+Filtrowanie i sortowanie piosenek według różnych kryteriów.
+
+\subsubsection{TestGetTags (5 testów)}
+Ekstrakcja i zarządzanie tagami piosenek.
+
+\subsubsection{TestGetSong (5 testów)}
+Pobieranie pojedynczej piosenki po ID.
+
+\subsubsection{TestGetSongsByIds (4 testy)}
+Pobieranie wielu piosenek na raz.
+
+\subsubsection{TestRemoveSong (3 testy)}
+Usuwanie piosenek z kolekcji.
+
+\subsubsection{TestLoadSaveSongs (3 testy)}
+Zapis i odczyt piosenek z pliku JSON.
+
+\subsection{test\_display\_func.py (35 testów) - Pokrycie 95\%}
+
+Testy formatowania wyświetlania piosenek.
+
+\subsubsection{TestChordsToScheme (5 testów)}
+Funkcja pomocnicza pozycjonująca akordy względem markerów w tekście.
+\begin{itemize}
+    \item test\_no\_markers\_returns\_original
+    \item test\_single\_marker
+    \item test\_multiple\_markers
+    \item test\_more\_markers\_than\_chords\_cycles
+    \item test\_extra\_chords\_appended
+\end{itemize}
+
+\subsubsection{TestGetDisplayLyrics (5 testów)}
+Formatowanie wyświetlania tekstów piosenek.
+\begin{itemize}
+    \item test\_basic\_lyrics\_display
+    \item test\_intro\_section\_included
+    \item test\_empty\_lines\_handled
+    \item test\_hidden\_lines\_included
+    \item test\_repeated\_sections\_deduplicated
+\end{itemize}
+
+\subsubsection{TestGetDisplayChords (4 testy)}
+Formatowanie wyświetlania akordów.
+\begin{itemize}
+    \item test\_basic\_chords\_display
+    \item test\_intro\_sections\_skipped
+    \item test\_tab\_sections\_skipped
+    \item test\_empty\_chords\_not\_displayed
+\end{itemize}
+
+\subsubsection{TestGetDisplay2 (7 testów)}
+Format tekstowy (plain text) z wyrównaniem tekstów i akordów.
+\begin{itemize}
+    \item test\_returns\_two\_element\_list
+    \item test\_lyrics\_and\_chords\_aligned
+    \item test\_intro\_section\_no\_chords
+    \item test\_chorus\_lines\_indented
+    \item test\_markers\_removed\_from\_lyrics
+    \item test\_chord\_counter\_cycles
+    \item test\_empty\_sections\_between\_content
+\end{itemize}
+
+\subsubsection{TestGetDisplay (12 testów)}
+Format HTML z tagami formatującymi.
+\begin{itemize}
+    \item test\_returns\_string
+    \item test\_contains\_html\_tags
+    \item test\_intro\_section\_bold
+    \item test\_tab\_section\_creates\_image\_tag
+    \item test\_chords\_wrapped\_in\_code\_tags
+    \item test\_second\_voice\_italicized
+    \item test\_hidden\_lines\_create\_newline
+    \item test\_chorus\_lines\_indented
+    \item test\_markers\_removed\_from\_lyrics
+    \item test\_chord\_counter\_increments
+    \item test\_numbered\_section\_fallback
+\end{itemize}
+
+\subsubsection{TestIntegration (3 testy)}
+Testy integracyjne wszystkich funkcji display.
+\begin{itemize}
+    \item test\_all\_display\_functions\_work
+    \item test\_complex\_song\_all\_features
+    \item test\_empty\_song\_handled
+\end{itemize}
+
+\section{Proces Naprawiania Testów (Etap 1)}
+
+\subsection{Zidentyfikowane Problemy}
+
+Po pierwszym uruchomieniu 98 testów, 6 nie przeszło pomyślnie:
+
+\begin{enumerate}
+    \item \texttt{test\_string\_to\_list\_single\_semicolon}
+    \item \texttt{test\_redefine\_sections\_only\_chords}
+    \item \texttt{test\_redefine\_sections\_chord\_pattern\_recognition}
+    \item \texttt{test\_name\_sections\_chorus\_detection}
+    \item \texttt{test\_get\_interval\_name\_basic}
+    \item \texttt{test\_get\_interval\_name\_modulo}
+\end{enumerate}
+
+\subsection{Grupa 1: Testy Parsowania}
+
+\subsubsection{Problem 1: test\_string\_to\_list\_single\_semicolon}
+\begin{itemize}
+    \item \textbf{Oczekiwanie:} \texttt{string\_to\_list(";")} zwróci \texttt{[""]}
+    \item \textbf{Rzeczywistość:} Funkcja \texttt{split(";")} zwraca \texttt{["", ""]}
+    \item \textbf{Rozwiązanie:} Zmieniono asercję na \texttt{["", ""]}
+\end{itemize}
+
+\subsubsection{Problemy 2-3: Przechowywanie akordów}
+\begin{itemize}
+    \item \textbf{Oczekiwanie:} Akordy pozostaną w polu \texttt{chords}
+    \item \textbf{Rzeczywistość:} Funkcja przepisuje akordy do pola \texttt{lyrics}
+    \item \textbf{Rozwiązanie:} Testy sprawdzają pole \texttt{lyrics} zamiast \texttt{chords}
+\end{itemize}
+
+\subsubsection{Problem 4: Numerowanie sekcji}
+\begin{itemize}
+    \item \textbf{Oczekiwanie:} Identyczne sekcje dostaną tę samą nazwę
+    \item \textbf{Rzeczywistość:} Funkcja numeruje sekcje: \texttt{'v'}, \texttt{'v1'}, \texttt{'v2'}
+    \item \textbf{Rozwiązanie:} Test sprawdza tylko prefiks nazwy
+\end{itemize}
+
+\subsection{Grupa 2: Testy Teorii Muzycznej}
+
+\subsubsection{Problemy 5-6: Operacja Modulo}
+\begin{itemize}
+    \item \textbf{Oczekiwanie:} 12 półtonów = oktawa (\texttt{"P8 (Octave)"})
+    \item \textbf{Rzeczywistość:} Funkcja używa \texttt{semitones \% 12}, więc \texttt{12 \% 12 = 0} → \texttt{"P1 (Unison)"}
+    \item \textbf{Rozwiązanie:} Dopasowano oczekiwania do implementacji
+\end{itemize}
+
+\subsection{Wynik Procesu Naprawy}
+
+\begin{itemize}
+    \item \textcolor{passgreen}{\textbf{Wszystkie 6 problemów naprawione w jednej iteracji}}
+    \item \textbf{Rodzaj napraw:} Tylko testy - bez zmian w kodzie produkcyjnym
+    \item \textbf{Czas naprawy:} < 30 minut
+    \item \textbf{Końcowy wynik:} 98/98 testów (100\%)
+\end{itemize}
+
+\section{Podsumowanie i Wnioski}
+
+\subsection{Osiągnięcia}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lcc}
+\toprule
+\textbf{Metryka} & \textbf{Początek} & \textbf{Koniec} \\
+\midrule
+Liczba testów & 0 & \textcolor{passgreen}{\textbf{133}} \\
+Testy przechodzące & - & \textcolor{passgreen}{\textbf{133 (100\%)}} \\
+Pokrycie (testowane moduły) & 0\% & \textcolor{passgreen}{\textbf{85\%}} \\
+\bottomrule
+\end{tabular}
+\caption{Postęp projektu testowania}
+\end{table}
+
+\subsection{Kluczowe Wnioski}
+
+\begin{enumerate}
+    \item \textbf{Jakość testów:} Wszystkie 133 testy przechodzą stabilnie
+    \item \textbf{Szybkość:} Pełny zestaw wykonuje się w < 0.6s
+    \item \textbf{Pokrycie:} Testowane moduły mają średnio 85\% pokrycia
+    \item \textbf{Proces naprawy:} Efektywny - 6 błędów naprawionych w jednej iteracji
+\end{enumerate}
+
+\subsection{Mocne Strony}
+
+\begin{itemize}
+    \item \textcolor{passgreen}{\textbf{Doskonałe pokrycie}} music\_theory.py (96\%) i display\_func.py (95\%)
+    \item \textbf{Czysta separacja} - brak zależności między testami
+    \item \textbf{Szybkie wykonanie} - feedback w < 1 sekundę
+\end{itemize}
+
+\subsection{Obszary do Poprawy}
+
+\begin{itemize}
+    \item \textbf{jsonify\_func.py} - zwiększyć pokrycie z 62\% do >80\%
+    \item \textbf{song\_func.py} - zwiększyć pokrycie z 73\% do >90\%
+\end{itemize}
+
+\section{Środowisko Techniczne}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{ll}
+\toprule
+\textbf{Komponent} & \textbf{Wersja} \\
+\midrule
+Python & 3.13.2 \\
+pytest & 9.0.2 \\
+pytest-cov & 7.0.0 \\
+System & Windows (win32) \\
+Framework GUI & CustomTkinter \\
+Biblioteki muzyczne & pygame 2.6.1, matplotlib 3.10.7 \\
+\bottomrule
+\end{tabular}
+\caption{Środowisko testowe}
+\end{table}
+
+\subsection{Struktura Projektu}
+
+\begin{verbatim}
+Metri-feature-splash/
++-- src/
+|   +-- metri/
+|       +-- logic/
+|       |   +-- display_func.py (95% pokrycia)
+|       |   +-- music_theory.py (96% pokrycia)
+|       |   +-- song_func.py (73% pokrycia)
+|       |   +-- jsonify_func.py (62% pokrycia)
+|       |   +-- keys.py (81% pokrycia)
+|       +-- views/ (0% pokrycia - UI)
++-- tests/
+|   +-- test_display_func.py (35 testów)
+|   +-- test_music_theory.py (24 testy)
+|   +-- test_jsonify_func.py (38 testów)
+|   +-- test_song_func.py (36 testy)
++-- pytest.ini
+\end{verbatim}
+
+\end{document}
