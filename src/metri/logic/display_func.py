@@ -1,8 +1,7 @@
 from .song_func import get_song
-from .keys import transpose
 import re
 
-def get_display_lyrics(song_id, transp=0):
+def get_display_lyrics(song_id):
 
     song = get_song(song_id)
     display = ''
@@ -23,15 +22,13 @@ def get_display_lyrics(song_id, transp=0):
                         break
                 if disp:
                     for line in lyrics[section]:
-                        if section[0] == 'i':
-                            line = transpose(line, song['key'], transp)
                         display += '\n' + line
                         if line == '':
                             display += '\n'
                 display += '\n\n'
     return display.strip()
 
-def get_display_chords(song_id, transp=0):
+def get_display_chords(song_id):
     song = get_song(song_id)
     display = ''
 
@@ -45,7 +42,6 @@ def get_display_chords(song_id, transp=0):
             if not (chords[section] == chords[section.rstrip('0123456789')] and section != section.rstrip('0123456789')):
                 display += '['+ section +']'
                 for line in chords[section]:
-                    line = transpose(line, song['key'], transp)
                     display += '\n' + line
                 display += '\n\n'
     return display.strip()
@@ -114,7 +110,6 @@ def get_display_2(song_id):
                     chord_counter = 0
 
                 chord_line = section_chords[chord_counter]
-                chord_line = transpose(chord_line, song.get('key', ''), 3)
                 chords_output.append(chord_line)
                 chord_counter += 1
 
@@ -127,21 +122,19 @@ def get_display_2(song_id):
     return ['\n'.join(lyrics_output).strip(), '\n'.join(chords_output).rstrip()]
 
 
-def get_display(song_id, transp=0):
+def get_display(song_id):
     song = get_song(song_id)
     display = ''
 
     lyrics = song['lyrics']
     chords = song['chords']
     content = song['content']
-    key = song['key']
 
     for section in content:
         chord_counter = -1
 
         if section[0] == 'i':  # interlude / chord lines
             for line in lyrics.get(section, []):  # assign next chord line from current section
-                line = transpose(line, key, transp)  # transpose chord line
                 # line = re.sub(r'([^\s]+)', r'<code>\1</code>', line)  # optional wrapping
                 display += '\n' + f"<b>{line}</b>"  # add line to display
 
@@ -174,7 +167,6 @@ def get_display(song_id, transp=0):
                             chord_counter += 1
 
                         chord_line = chords[section_base][chord_counter]
-                        chord_line = transpose(chord_line, key, transp)
                         chord_line = chords_to_scheme(chord_line, lyrics_line)
                         chord_line = re.sub(r'([^\s]+)', r'<code>\1</code>', chord_line)
 
