@@ -272,7 +272,8 @@ class SongbookView(ctk.CTkFrame):
             anchor="w"
         ).pack(pady=(10, 5), padx=inner_pad, anchor="w")
 
-        languages = ["Wszystkie", "Polski", "Angielski", "Niemiecki", "Inny"]
+        # Języki muszą mieć dokładnie te same wartości, co w JSON (songs.json)
+        languages = ["Wszystkie", "pl", "eng", "de", "inny"]
         language_menu = ctk.CTkOptionMenu(
             left_frame,
             variable=self.language_var,
@@ -854,6 +855,7 @@ class SongbookView(ctk.CTkFrame):
     def _apply_filters(self, force: bool = False):
         """Apply filters; skip work if inputs unchanged unless force=True."""
         search_text = self.search_var.get().lower()
+        # Wartość wybrana w menu języków (musi zgadzać się z wartościami w JSON, np. "pl", "eng", "inny")
         language_filter = self.language_var.get()
 
 
@@ -869,6 +871,7 @@ class SongbookView(ctk.CTkFrame):
             search_args['search'] = search_text
         
         if language_filter != "Wszystkie":
+            # Bez mapowania – filtr języka jest używany dokładnie tak samo jak zapis w JSON
             search_args['language'] = language_filter
         
         # Build a stable cache signature for current filters
