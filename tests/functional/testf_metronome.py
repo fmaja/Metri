@@ -86,7 +86,6 @@ def test_metronome_toggle_start_stop(metronome_view):
     # WHEN: START
     metronome_view.toggle_metronome()
 
-    # [WAŻNE] Zapisujemy referencję do działającego wątku, zanim zostanie wyzerowana!
     started_thread = metronome_view.metronome_thread
 
     # THEN: Start
@@ -101,11 +100,10 @@ def test_metronome_toggle_start_stop(metronome_view):
     assert metronome_view.is_running_var.get() == False
     assert metronome_view.start_stop_button.cget("text") == "START"
 
-    # Czekamy na zakończenie wątku używając zapisanej zmiennej
     if started_thread:
         started_thread.join(timeout=0.2)
 
-    # Sprawdzamy czy widok wyczyścił pole
+    # Sprawdzanie czy widok wyczyścił pole
     assert metronome_view.metronome_thread is None
 
 

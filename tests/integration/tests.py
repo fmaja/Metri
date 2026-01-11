@@ -144,3 +144,4 @@ def test_integration_save_session(quiz_view_integrated, mock_session_management_
 
     # Sprawdzenie, czy modal został wywołany po zapisie
     quiz_view_integrated.show_results_modal.assert_called_once()
+

@@ -11,6 +11,10 @@ import os
 from PIL import Image
 from datetime import datetime
 from typing import Optional, Type, Tuple, Callable
+import os
+import sys
+import json
+from datetime import datetime, timedelta
 
 
 class MainScreen:
@@ -56,7 +60,6 @@ class MainScreen:
         master.title("Metri - Menu Główne")
         master.geometry("1000x800")
 
-        ctk.set_appearance_mode("Light")
         self.current_theme = ctk.get_appearance_mode()
 
         self.container = ctk.CTkFrame(master, fg_color=self._get_main_bg_color())
@@ -102,27 +105,56 @@ class MainScreen:
         return "#EEEEEE"  # Jasnoszary
 
     def _get_day_view_stats(self):
-        """Pobiera statystyki dzienne/tygodniowe."""
-        temp_frame = ctk.CTkFrame(self.master)
         try:
-            temp_day_view = DayView(temp_frame, selected_date=datetime.now())
-            percentage, week_total = temp_day_view._get_current_week_progress()
-            daily_minutes = temp_day_view._get_practice_minutes(datetime.now())
-            daily_goal = temp_day_view.PRACTICE_GOAL
+            # --- dokładnie ta sama ścieżka co w DayView ---
+            if getattr(sys, 'frozen', False):
+                data_dir = os.path.join(os.getenv('APPDATA'), 'Metri')
+            else:
+                base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+                data_dir = os.path.join(base_dir, 'data')
+
+            data_file = os.path.join(data_dir, 'practice_data.json')
+
+            if not os.path.exists(data_file):
+                raise FileNotFoundError("Brak practice_data.json")
+
+            with open(data_file, 'r', encoding='utf-8') as f:
+                practice_data = json.load(f)
+
+            today = datetime.now()
+            today_str = today.strftime("%Y-%m-%d")
+
+            # --- dzienne ---
+            daily_minutes = practice_data.get(today_str, 0)
+
+            # --- tygodniowe ---
+            monday = today - timedelta(days=today.weekday())
+            week_total = 0
+            for i in range(7):
+                day = monday + timedelta(days=i)
+                week_total += practice_data.get(day.strftime("%Y-%m-%d"), 0)
+
+            week_goal = 180
+            percentage = int((week_total / week_goal) * 100) if week_goal else 0
+            percentage = min(percentage, 100)
 
             self.stats = {
-                "week_progress": percentage, "week_total_min": week_total, "week_goal_min": temp_day_view.WEEKLY_GOAL,
-                "daily_min": daily_minutes, "daily_goal": daily_goal,
+                "week_progress": percentage,
+                "week_total_min": week_total,
+                "week_goal_min": week_goal,
+                "daily_min": daily_minutes,
+                "daily_goal": 30
             }
-            temp_day_view.destroy()
-        except Exception:
-            self.stats = {
-                "week_progress": 0, "week_total_min": 0, "week_goal_min": 180,
-                "daily_min": 0, "daily_goal": 30
-            }
-        finally:
-            temp_frame.destroy()
 
+        except Exception as e:
+            print("MAIN STATS ERROR:", e)
+            self.stats = {
+                "week_progress": 0,
+                "week_total_min": 0,
+                "week_goal_min": 180,
+                "daily_min": 0,
+                "daily_goal": 30
+            }
     def _get_darker_color(self, hex_color: str) -> str:
         """Zwraca nieco ciemniejszy odcień koloru (do efektu hover)."""
         hex_color = hex_color.lstrip('#')
@@ -492,18 +524,6 @@ class MainScreen:
         self._hide_current_view()
         if self.menu_frame:
             self.menu_frame.pack(fill="both", expand=True)
-
-    def _toggle_theme(self):
-        """Przełącza motyw i wymusza odświeżenie UI."""
-        if ctk.get_appearance_mode() == "Light":
-            ctk.set_appearance_mode("Dark")
-            self.current_theme = "Dark"
-        else:
-            ctk.set_appearance_mode("Light")
-            self.current_theme = "Light"
-
-        # Po zmianie motywu odśwież menu
-        self.show_menu()
 
     def _toggle_theme(self):
         """Przełącza motyw i odświeża tylko kolory."""

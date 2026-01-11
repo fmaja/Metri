@@ -69,11 +69,21 @@ def run():
     gif_path = os.path.join(BASE_DIR, "assets", "splash2.gif")
     sound_path = os.path.join(BASE_DIR, "assets", "splash.mp3")
 
+    app.withdraw()  # ukryj główne okno NA START
+
+    def show_splash():
+        SplashGIF(
+            gif_path,
+            sound_path,
+            on_finish=show_app
+        )
+
     def show_app():
         app.deiconify()
-        app.attributes("-fullscreen", True)   # pełen ekran bez paska
+        app.attributes("-fullscreen", True)
 
-    splash = SplashGIF(gif_path, sound_path, on_finish=show_app)
-    app.withdraw()  # ukrycie głównego okna
+    # 🔑 splash MUSI być odpalony z mainloop
+    app.after(0, show_splash)
 
-    splash.mainloop()
+    # ✅ JEDYNY mainloop
+    app.mainloop()
